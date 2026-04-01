@@ -1,4 +1,4 @@
-# Node modules
+# Dependencies
 node_modules/
 
 # Environment variables
@@ -9,12 +9,22 @@ node_modules/
 # Dependencies
 node_modules/
 
-# Mac system files
-.DS_Store
-
-# Log files
+# Logs
 logs/
+*.log
+npm-debug.log*
 
-# Build artifacts
-/dist/
-/build/
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+
+# Uploaded files
+uploads/
