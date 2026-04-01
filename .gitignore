@@ -1,3 +1,6 @@
+# Node modules
+node_modules/
+
 # Environment variables
 .env
 .env.local
@@ -6,16 +9,12 @@
 # Dependencies
 node_modules/
 
-# System files
+# Mac system files
 .DS_Store
-.vscode/
-.idea/
 
-# Logs
+# Log files
 logs/
-*.log
-npm-debug.log*
 
-# Build
-dist/
-build/
+# Build artifacts
+/dist/
+/build/
