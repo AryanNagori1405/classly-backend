@@ -75,3 +75,23 @@ exports.login = async (req, res) => {
         return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
 };
+
+// Get Current User Profile
+exports.getProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch user from database
+        const userResult = await pool.query('SELECT id, email, name, role, profile_picture, bio FROM users WHERE id = $1', [userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const user = userResult.rows[0];
+        return res.status(200).json({ user });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    }
+};
