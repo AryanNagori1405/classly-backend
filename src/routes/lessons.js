@@ -39,7 +39,7 @@ async function validateCourseOwnership(courseId, userId) {
 async function validateEnrollment(courseId, userId) {
     try {
         const result = await pool.query(
-            'SELECT * FROM enrollments WHERE course_id = $1 AND user_id = $2',
+            'SELECT * FROM enrollments WHERE course_id = $1 AND student_id = $2',
             [courseId, userId]
         );
         return result.rows.length > 0;
