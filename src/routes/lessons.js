@@ -11,7 +11,7 @@ function authenticateToken(req, res, next) {
         return res.status(401).json({ message: 'No token provided' });
     }
 
-    // Use JWT_SECRET (defined in .env) to verify token
+    // Verify token using JWT_SECRET from environment
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({ message: 'Invalid or expired token' });
@@ -52,12 +52,12 @@ async function validateEnrollment(courseId, userId) {
 // POST /api/lessons - Create a new lesson
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { courseId, title, description, content, video_url, duration } = req.body;
+        const { courseId, title, content } = req.body;
         const userId = req.user.id;
 
         // Validate required fields
-        if (!courseId || !title) {
-            return res.status(400).json({ message: 'courseId and title are required' });
+        if (!courseId || !title || !content) {
+            return res.status(400).json({ message: 'courseId, title, and content are required' });
         }
 
         // Check course exists
@@ -74,10 +74,10 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // Insert lesson into database
         const result = await pool.query(
-            `INSERT INTO lessons (course_id, title, description, content, video_url, duration, is_published)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO lessons (course_id, title, content)
+             VALUES ($1, $2, $3)
              RETURNING *`,
-            [courseId, title, description || null, content || null, video_url || null, duration || null, false]
+            [courseId, title, content]
         );
 
         res.status(201).json({
@@ -139,7 +139,7 @@ router.get('/course/:courseId', authenticateToken, async (req, res) => {
         }
 
         const result = await pool.query(
-            'SELECT * FROM lessons WHERE course_id = $1 ORDER BY order_index ASC',
+            'SELECT * FROM lessons WHERE course_id = $1 ORDER BY created_at ASC',
             [courseId]
         );
 
@@ -158,7 +158,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
-        const { title, description, content, video_url, duration } = req.body;
+        const { title, content } = req.body;
 
         const lessonResult = await pool.query('SELECT * FROM lessons WHERE id = $1', [lessonId]);
         if (lessonResult.rows.length === 0) {
@@ -176,14 +176,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
         const result = await pool.query(
             `UPDATE lessons 
              SET title = COALESCE($1, title),
-                 description = COALESCE($2, description),
-                 content = COALESCE($3, content),
-                 video_url = COALESCE($4, video_url),
-                 duration = COALESCE($5, duration),
+                 content = COALESCE($2, content),
                  updated_at = CURRENT_TIMESTAMP
-             WHERE id = $6
+             WHERE id = $3
              RETURNING *`,
-            [title, description, content, video_url, duration, lessonId]
+            [title, content, lessonId]
         );
 
         res.json({
