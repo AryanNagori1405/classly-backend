@@ -23,10 +23,12 @@ function authenticateToken(req, res, next) {
 // Helper: Check if student is enrolled in course
 async function validateEnrollment(courseId, userId) {
     try {
+        console.log('Checking enrollment - Course ID:', courseId, 'Student ID:', userId);
         const result = await pool.query(
             'SELECT * FROM enrollments WHERE course_id = $1 AND student_id = $2',
             [courseId, userId]
         );
+        console.log('Enrollment query result:', result.rows);
         return result.rows.length > 0;
     } catch (error) {
         console.error('Error validating enrollment:', error);
@@ -54,6 +56,11 @@ router.post('/', authenticateToken, async (req, res) => {
         const { quizId, answers } = req.body;
         const studentId = req.user.id;
 
+        console.log('=== Quiz Submission Started ===');
+        console.log('Quiz ID:', quizId);
+        console.log('Student ID:', studentId);
+        console.log('Student from token:', req.user);
+
         // Validate required fields
         if (!quizId || !answers || !Array.isArray(answers)) {
             return res.status(400).json({ message: 'quizId and answers array are required' });
@@ -66,9 +73,12 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         const quiz = quizResult.rows[0];
+        console.log('Quiz found:', quiz);
 
         // Check if student is enrolled
         const isEnrolled = await validateEnrollment(quiz.course_id, studentId);
+        console.log('Is enrolled:', isEnrolled);
+        
         if (!isEnrolled) {
             return res.status(403).json({ message: 'You are not enrolled in this course' });
         }
