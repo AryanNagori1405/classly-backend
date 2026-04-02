@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const pool = require('./config/database');
 const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
 const enrollmentRoutes = require('./routes/enrollments');
+const lessonRoutes = require('./routes/lessons');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
@@ -12,6 +14,16 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
+
+// Rate limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: 'Too many requests, please try again later.' },
+});
+app.use(limiter);
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
@@ -92,6 +104,9 @@ app.use('/api/courses', courseRoutes);
 
 // Enrollment Routes
 app.use('/api/enrollments', enrollmentRoutes);
+
+// Lesson Routes
+app.use('/api/lessons', lessonRoutes);
 
 // ===== PROTECTED ROUTES =====
 
