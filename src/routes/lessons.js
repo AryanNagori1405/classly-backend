@@ -49,7 +49,7 @@ async function validateEnrollment(courseId, userId) {
     }
 }
 
-// POST /api/lessons - Create a new lesson
+// POST /api/lessons - Create a new lesson (teachers only)
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const { courseId, title, content } = req.body;
@@ -66,7 +66,7 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Course not found' });
         }
 
-        // Verify user owns this course
+        // Verify user owns this course before creating a lesson
         const isOwner = await validateCourseOwnership(courseId, userId);
         if (!isOwner) {
             return res.status(403).json({ message: 'You can only create lessons in your own courses' });
@@ -90,35 +90,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// GET /api/lessons/:id - Get specific lesson
-router.get('/:id', authenticateToken, async (req, res) => {
-    try {
-        const lessonId = req.params.id;
-        const userId = req.user.id;
-
-        const lessonResult = await pool.query('SELECT * FROM lessons WHERE id = $1', [lessonId]);
-        if (lessonResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Lesson not found' });
-        }
-
-        const lesson = lessonResult.rows[0];
-
-        // Check if user has access (enrolled or is owner)
-        const isEnrolled = await validateEnrollment(lesson.course_id, userId);
-        const isOwner = await validateCourseOwnership(lesson.course_id, userId);
-
-        if (!isEnrolled && !isOwner) {
-            return res.status(403).json({ message: 'You do not have access to this lesson' });
-        }
-
-        res.json(lesson);
-    } catch (error) {
-        console.error('Error fetching lesson:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// GET /api/lessons/course/:courseId - Get all lessons in a course
+// GET /api/lessons/course/:courseId - Get all lessons in a course (BEFORE /:id)
 router.get('/course/:courseId', authenticateToken, async (req, res) => {
     try {
         const courseId = req.params.courseId;
@@ -130,7 +102,7 @@ router.get('/course/:courseId', authenticateToken, async (req, res) => {
             return res.status(404).json({ message: 'Course not found' });
         }
 
-        // Check if user has access
+        // Check if user has access to this course (enrolled or owns it)
         const isEnrolled = await validateEnrollment(courseId, userId);
         const isOwner = await validateCourseOwnership(courseId, userId);
 
@@ -138,6 +110,7 @@ router.get('/course/:courseId', authenticateToken, async (req, res) => {
             return res.status(403).json({ message: 'You do not have access to this course' });
         }
 
+        // Retrieve all lessons for this course ordered by creation date
         const result = await pool.query(
             'SELECT * FROM lessons WHERE course_id = $1 ORDER BY created_at ASC',
             [courseId]
@@ -153,13 +126,13 @@ router.get('/course/:courseId', authenticateToken, async (req, res) => {
     }
 });
 
-// PUT /api/lessons/:id - Update a lesson
-router.put('/:id', authenticateToken, async (req, res) => {
+// GET /api/lessons/:id - Get a specific lesson by ID (AFTER /course/:courseId)
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
-        const { title, content } = req.body;
 
+        // Fetch the lesson from database
         const lessonResult = await pool.query('SELECT * FROM lessons WHERE id = $1', [lessonId]);
         if (lessonResult.rows.length === 0) {
             return res.status(404).json({ message: 'Lesson not found' });
@@ -167,12 +140,43 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         const lesson = lessonResult.rows[0];
 
-        // Verify user owns the course
+        // Check if user has access (enrolled in course or owns the course)
+        const isEnrolled = await validateEnrollment(lesson.course_id, userId);
+        const isOwner = await validateCourseOwnership(lesson.course_id, userId);
+
+        if (!isEnrolled && !isOwner) {
+            return res.status(403).json({ message: 'You do not have access to this lesson' });
+        }
+
+        res.json(lesson);
+    } catch (error) {
+        console.error('Error fetching lesson:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// PUT /api/lessons/:id - Update a lesson (teachers only)
+router.put('/:id', authenticateToken, async (req, res) => {
+    try {
+        const lessonId = req.params.id;
+        const userId = req.user.id;
+        const { title, content } = req.body;
+
+        // Fetch lesson to verify ownership
+        const lessonResult = await pool.query('SELECT * FROM lessons WHERE id = $1', [lessonId]);
+        if (lessonResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Lesson not found' });
+        }
+
+        const lesson = lessonResult.rows[0];
+
+        // Verify user owns the course before allowing update
         const isOwner = await validateCourseOwnership(lesson.course_id, userId);
         if (!isOwner) {
             return res.status(403).json({ message: 'You can only update lessons in your own courses' });
         }
 
+        // Update the lesson with new values
         const result = await pool.query(
             `UPDATE lessons 
              SET title = COALESCE($1, title),
@@ -193,12 +197,13 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// DELETE /api/lessons/:id - Delete a lesson
+// DELETE /api/lessons/:id - Delete a lesson (teachers only)
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
 
+        // Fetch lesson to verify ownership
         const lessonResult = await pool.query('SELECT * FROM lessons WHERE id = $1', [lessonId]);
         if (lessonResult.rows.length === 0) {
             return res.status(404).json({ message: 'Lesson not found' });
@@ -206,12 +211,13 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 
         const lesson = lessonResult.rows[0];
 
-        // Verify user owns the course
+        // Verify user owns the course before allowing deletion
         const isOwner = await validateCourseOwnership(lesson.course_id, userId);
         if (!isOwner) {
             return res.status(403).json({ message: 'You can only delete lessons from your own courses' });
         }
 
+        // Delete the lesson from the database
         await pool.query('DELETE FROM lessons WHERE id = $1', [lessonId]);
 
         res.json({ message: 'Lesson deleted successfully' });
