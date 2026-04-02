@@ -8,6 +8,8 @@ const lessonRoutes = require('./routes/lessons');
 const quizRoutes = require('./routes/quizzes');
 const questionRoutes = require('./routes/questions');
 const submissionRoutes = require('./routes/submissions');
+const videosRoutes = require('./routes/videos');
+const communitiesRoutes = require('./routes/communities');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
@@ -108,6 +110,12 @@ app.use('/api/questions', questionRoutes);
 
 // Submissions Routes
 app.use('/api/submissions', submissionRoutes);
+
+// Videos Routes
+app.use('/api/videos', videosRoutes);
+
+// Communities Routes
+app.use('/api/communities', communitiesRoutes);
 
 // ===== PROTECTED ROUTES =====
 

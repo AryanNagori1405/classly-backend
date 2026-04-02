@@ -48,45 +48,48 @@ async function validateEnrollment(courseId, userId) {
     }
 }
 
-// POST /api/quizzes - Create a new quiz (teachers only)
+// POST /api/quizzes - Create quiz (teacher only)
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { courseId, lessonId, title, description, passingScore } = req.body;
-        const userId = req.user.id;
+        const { title, description, course_id, lesson_id, passing_score } = req.body;
+        const teacherId = req.user.id;
 
         // Validate required fields
-        if (!courseId || !lessonId || !title) {
-            return res.status(400).json({ message: 'courseId, lessonId, and title are required' });
+        if (!title || !course_id) {
+            return res.status(400).json({ message: 'Title and course_id are required' });
         }
 
-        // Check if course exists
-        const courseResult = await pool.query('SELECT * FROM courses WHERE id = $1', [courseId]);
+        // Check if course exists and quizzes are enabled
+        const courseResult = await pool.query(
+            'SELECT * FROM courses WHERE id = $1 AND created_by = $2',
+            [course_id, teacherId]
+        );
+
         if (courseResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Course not found' });
+            return res.status(403).json({ message: 'Course not found or you are not the creator' });
         }
 
-        // Check if lesson exists and belongs to course
-        const lessonResult = await pool.query(
-            'SELECT * FROM lessons WHERE id = $1 AND course_id = $2',
-            [lessonId, courseId]
-        );
-        if (lessonResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Lesson not found in this course' });
+        if (!courseResult.rows[0].enable_quizzes) {
+            return res.status(400).json({ 
+                message: 'Quizzes are not enabled for this course. Please enable quizzes in course settings.' 
+            });
         }
 
-        // Verify user owns the course
-        const isOwner = await validateCourseOwnership(courseId, userId);
-        if (!isOwner) {
-            return res.status(403).json({ message: 'You can only create quizzes in your own courses' });
-        }
-
-        // Insert quiz into database
+        // Create quiz
         const result = await pool.query(
-            `INSERT INTO quizzes (course_id, lesson_id, title, description, passing_score, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6)
+            `INSERT INTO quizzes (course_id, lesson_id, created_by, title, description, passing_score, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [courseId, lessonId, title, description || null, passingScore || 70, userId]
+            [course_id, lesson_id || null, teacherId, title, description, passing_score || 50]
         );
+
+        // If lesson_id provided, update lesson with quiz_id
+        if (lesson_id) {
+            await pool.query(
+                'UPDATE lessons SET quiz_id = $1 WHERE id = $2',
+                [result.rows[0].id, lesson_id]
+            );
+        }
 
         res.status(201).json({
             message: 'Quiz created successfully',
