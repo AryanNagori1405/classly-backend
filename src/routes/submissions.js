@@ -23,12 +23,10 @@ function authenticateToken(req, res, next) {
 // Helper: Check if student is enrolled in course
 async function validateEnrollment(courseId, userId) {
     try {
-        console.log('Checking enrollment - Course ID:', courseId, 'Student ID:', userId);
         const result = await pool.query(
             'SELECT * FROM enrollments WHERE course_id = $1 AND student_id = $2',
             [courseId, userId]
         );
-        console.log('Enrollment query result:', result.rows);
         return result.rows.length > 0;
     } catch (error) {
         console.error('Error validating enrollment:', error);
@@ -39,15 +37,11 @@ async function validateEnrollment(courseId, userId) {
 // Helper: Check if teacher owns the course
 async function validateCourseOwnership(courseId, userId) {
     try {
-        console.log('Checking course ownership - Course ID:', courseId, 'User ID:', userId);
         const result = await pool.query(
             'SELECT * FROM courses WHERE id = $1 AND created_by = $2',
             [courseId, userId]
         );
-        console.log('Course ownership query result:', result.rows);
-        const isOwner = result.rows.length > 0;
-        console.log('Is owner:', isOwner);
-        return isOwner;
+        return result.rows.length > 0;
     } catch (error) {
         console.error('Error validating course ownership:', error);
         throw error;
@@ -59,11 +53,6 @@ router.post('/', authenticateToken, async (req, res) => {
     try {
         const { quizId, answers } = req.body;
         const studentId = req.user.id;
-
-        console.log('=== Quiz Submission Started ===');
-        console.log('Quiz ID:', quizId);
-        console.log('Student ID:', studentId);
-        console.log('Student from token:', req.user);
 
         // Validate required fields
         if (!quizId || !answers || !Array.isArray(answers)) {
@@ -77,17 +66,15 @@ router.post('/', authenticateToken, async (req, res) => {
         }
 
         const quiz = quizResult.rows[0];
-        console.log('Quiz found:', quiz);
 
-        // Check if student is enrolled
+        // Check if student is enrolled in the course
         const isEnrolled = await validateEnrollment(quiz.course_id, studentId);
-        console.log('Is enrolled:', isEnrolled);
         
         if (!isEnrolled) {
             return res.status(403).json({ message: 'You are not enrolled in this course' });
         }
 
-        // Create quiz submission
+        // Create quiz submission record
         const submissionResult = await pool.query(
             `INSERT INTO quiz_submissions (quiz_id, student_id, submitted_at)
              VALUES ($1, $2, CURRENT_TIMESTAMP)
@@ -99,23 +86,23 @@ router.post('/', authenticateToken, async (req, res) => {
         let totalScore = 0;
         let maxScore = 0;
 
-        // Get all questions and their correct answers
+        // Get all questions for the quiz
         const questionsResult = await pool.query(
             'SELECT * FROM questions WHERE quiz_id = $1',
             [quizId]
         );
 
-        // Process each answer
+        // Process each student answer
         for (const answer of answers) {
             const { questionId, selectedOptionId } = answer;
 
-            // Get question
+            // Find the question
             const question = questionsResult.rows.find(q => q.id === questionId);
             if (!question) continue;
 
             maxScore += question.points;
 
-            // Get correct option
+            // Get the correct answer for this question
             const correctOptionResult = await pool.query(
                 'SELECT * FROM question_options WHERE question_id = $1 AND is_correct = true',
                 [questionId]
@@ -127,7 +114,7 @@ router.post('/', authenticateToken, async (req, res) => {
             const pointsEarned = isCorrect ? question.points : 0;
             if (isCorrect) totalScore += pointsEarned;
 
-            // Save student answer
+            // Save student's answer
             await pool.query(
                 `INSERT INTO student_answers (submission_id, question_id, selected_option_id, is_correct, points_earned)
                  VALUES ($1, $2, $3, $4, $5)`,
@@ -135,10 +122,11 @@ router.post('/', authenticateToken, async (req, res) => {
             );
         }
 
-        // Calculate percentage and update submission with score
+        // Calculate score percentage and check if passed
         const scorePercentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
         const passed = scorePercentage >= quiz.passing_score;
 
+        // Update submission with final score
         const updatedSubmission = await pool.query(
             `UPDATE quiz_submissions 
              SET score = $1, passed = $2
@@ -163,12 +151,13 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-// GET /api/submissions/:submissionId - Get submission details
+// GET /api/submissions/:submissionId - Get submission details with answers
 router.get('/:submissionId', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.submissionId;
         const userId = req.user.id;
 
+        // Fetch the submission
         const submissionResult = await pool.query(
             'SELECT * FROM quiz_submissions WHERE id = $1',
             [submissionId]
@@ -180,9 +169,8 @@ router.get('/:submissionId', authenticateToken, async (req, res) => {
 
         const submission = submissionResult.rows[0];
 
-        // Check if user is the student or the teacher
+        // Verify access: user must be the student or the course teacher
         if (submission.student_id !== userId) {
-            // Check if user is the teacher
             const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [submission.quiz_id]);
             const quiz = quizResult.rows[0];
 
@@ -192,7 +180,7 @@ router.get('/:submissionId', authenticateToken, async (req, res) => {
             }
         }
 
-        // Get student answers
+        // Fetch all student answers with question details
         const answersResult = await pool.query(
             `SELECT sa.*, q.question_text, q.points, qo.option_text, qo.is_correct
              FROM student_answers sa
@@ -219,7 +207,7 @@ router.get('/quiz/:quizId', authenticateToken, async (req, res) => {
         const quizId = req.params.quizId;
         const userId = req.user.id;
 
-        // Get quiz
+        // Fetch the quiz
         const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [quizId]);
         if (quizResult.rows.length === 0) {
             return res.status(404).json({ message: 'Quiz not found' });
@@ -227,13 +215,13 @@ router.get('/quiz/:quizId', authenticateToken, async (req, res) => {
 
         const quiz = quizResult.rows[0];
 
-        // Verify user owns the course
+        // Verify the teacher owns this course
         const isOwner = await validateCourseOwnership(quiz.course_id, userId);
         if (!isOwner) {
             return res.status(403).json({ message: 'You can only view submissions for your own quizzes' });
         }
 
-        // Get all submissions
+        // Fetch all submissions for the quiz with student info
         const result = await pool.query(
             `SELECT qs.*, u.email, u.name
              FROM quiz_submissions qs
@@ -253,13 +241,13 @@ router.get('/quiz/:quizId', authenticateToken, async (req, res) => {
     }
 });
 
-// GET /api/submissions/student/:studentId/quiz/:quizId - Get student's submission for a quiz
+// GET /api/submissions/student/:studentId/quiz/:quizId - Get student's submission for a specific quiz
 router.get('/student/:studentId/quiz/:quizId', authenticateToken, async (req, res) => {
     try {
         const { studentId, quizId } = req.params;
         const userId = req.user.id;
 
-        // Get quiz
+        // Fetch the quiz
         const quizResult = await pool.query('SELECT * FROM quizzes WHERE id = $1', [quizId]);
         if (quizResult.rows.length === 0) {
             return res.status(404).json({ message: 'Quiz not found' });
@@ -267,7 +255,7 @@ router.get('/student/:studentId/quiz/:quizId', authenticateToken, async (req, re
 
         const quiz = quizResult.rows[0];
 
-        // Check access
+        // Verify access: user must be the student or the course teacher
         const isOwner = await validateCourseOwnership(quiz.course_id, userId);
         const isStudent = userId == studentId;
 
@@ -275,7 +263,7 @@ router.get('/student/:studentId/quiz/:quizId', authenticateToken, async (req, re
             return res.status(403).json({ message: 'You do not have access to this submission' });
         }
 
-        // Get submission
+        // Fetch the student's submission for this quiz
         const result = await pool.query(
             'SELECT * FROM quiz_submissions WHERE quiz_id = $1 AND student_id = $2 ORDER BY submitted_at DESC LIMIT 1',
             [quizId, studentId]
