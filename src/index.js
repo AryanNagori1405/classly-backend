@@ -12,6 +12,7 @@ const videosRoutes = require('./routes/videos');
 const communitiesRoutes = require('./routes/communities');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const timestampsRoutes = require('./routes/timestamps');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -116,6 +117,9 @@ app.use('/api/videos', videosRoutes);
 
 // Communities Routes
 app.use('/api/communities', communitiesRoutes);
+
+// Timestamp Routes (Doubts System)
+app.use('/api/timestamps', timestampsRoutes);
 
 // ===== PROTECTED ROUTES =====
 
