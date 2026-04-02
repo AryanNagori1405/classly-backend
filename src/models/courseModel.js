@@ -1,4 +1,4 @@
-const db = require('../config/db'); // Assuming there's a db config
+const db = require('../config/database');
 
 const Course = {
     // Function to create a new course

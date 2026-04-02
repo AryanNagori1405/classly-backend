@@ -57,7 +57,7 @@ exports.login = async (req, res) => {
             return res.status(403).json({ message: 'Please verify your email before logging in' });
         }
 
-        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         return res.status(200).json({ message: 'Login successful', token });
     } catch (error) {
         console.error(error);

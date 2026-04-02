@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const pool = require('./config/database');
 const authRoutes = require('./routes/auth');
+const courseRoutes = require('./routes/courses');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
@@ -84,6 +85,9 @@ app.get('/', (req, res) => {
 
 // Auth Routes
 app.use('/api/auth', authRoutes);
+
+// Course Routes
+app.use('/api/courses', courseRoutes);
 
 // ===== PROTECTED ROUTES =====
 
