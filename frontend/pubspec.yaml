@@ -23,6 +23,7 @@ dependencies:
   cached_network_image: ^3.3.0
   smooth_page_indicator: ^1.1.0
   badges: ^3.1.0
+  uuid: ^4.5.3
 
 dev_dependencies:
   flutter_test:

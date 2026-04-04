@@ -1,73 +1,92 @@
+import 'package:uuid/uuid.dart';
+
 class Video {
-  final int id;
+  final String id;
   final String title;
   final String description;
-  final String instructor;
+  final String uploadedBy; // Teacher UID
   final String videoUrl;
-  final String? thumbnail;
+  final String thumbnailUrl;
+  final String subject;
+  final String category;
   final int duration; // in seconds
-  final int views;
-  final int upvotes;
-  final int downloads;
-  final double rating;
-  final int courseId;
-  final String courseName;
   final DateTime createdAt;
+  final DateTime expiresAt;
+  final int views;
+  final double rating;
+  final List<String> tags;
+  final String? notesUrl;
+  final bool isPinned;
+  final int downloadsCount;
+  final List<String> allowedUserIds;
 
   Video({
-    required this.id,
+    String? id,
     required this.title,
     required this.description,
-    required this.instructor,
+    required this.uploadedBy,
     required this.videoUrl,
-    this.thumbnail,
-    this.duration = 0,
-    this.views = 0,
-    this.upvotes = 0,
-    this.downloads = 0,
-    this.rating = 0.0,
-    required this.courseId,
-    required this.courseName,
+    required this.thumbnailUrl,
+    required this.subject,
+    required this.category,
+    required this.duration,
     required this.createdAt,
-  });
+    DateTime? expiresAt,
+    this.views = 0,
+    this.rating = 0.0,
+    this.tags = const [],
+    this.notesUrl,
+    this.isPinned = false,
+    this.downloadsCount = 0,
+    this.allowedUserIds = const [],
+  })  : id = id ?? const Uuid().v4(),
+        expiresAt = expiresAt ?? createdAt.add(const Duration(days: 7));
 
-  factory Video.fromJson(Map<String, dynamic> json) {
-    return Video(
-      id: json['id'] ?? 0,
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      instructor: json['instructor'] ?? '',
-      videoUrl: json['video_url'] ?? '',
-      thumbnail: json['thumbnail'],
-      duration: json['duration'] ?? 0,
-      views: json['views'] ?? 0,
-      upvotes: json['upvotes'] ?? 0,
-      downloads: json['downloads'] ?? 0,
-      rating: (json['rating'] ?? 0).toDouble(),
-      courseId: json['course_id'] ?? 0,
-      courseName: json['course_name'] ?? '',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : DateTime.now(),
-    );
-  }
+  bool get isExpired => DateTime.now().isAfter(expiresAt);
+  bool get isExpiringSoon => 
+      DateTime.now().difference(expiresAt).inDays <= 1;
+  int get daysRemaining => 
+      expiresAt.difference(DateTime.now()).inDays;
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'instructor': instructor,
-      'video_url': videoUrl,
-      'thumbnail': thumbnail,
-      'duration': duration,
-      'views': views,
-      'upvotes': upvotes,
-      'downloads': downloads,
-      'rating': rating,
-      'course_id': courseId,
-      'course_name': courseName,
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'uploadedBy': uploadedBy,
+    'videoUrl': videoUrl,
+    'thumbnailUrl': thumbnailUrl,
+    'subject': subject,
+    'category': category,
+    'duration': duration,
+    'createdAt': createdAt.toIso8601String(),
+    'expiresAt': expiresAt.toIso8601String(),
+    'views': views,
+    'rating': rating,
+    'tags': tags,
+    'notesUrl': notesUrl,
+    'isPinned': isPinned,
+    'downloadsCount': downloadsCount,
+    'allowedUserIds': allowedUserIds,
+  };
+
+  factory Video.fromJson(Map<String, dynamic> json) => Video(
+    id: json['id'],
+    title: json['title'],
+    description: json['description'],
+    uploadedBy: json['uploadedBy'],
+    videoUrl: json['videoUrl'],
+    thumbnailUrl: json['thumbnailUrl'],
+    subject: json['subject'],
+    category: json['category'],
+    duration: json['duration'],
+    createdAt: DateTime.parse(json['createdAt']),
+    expiresAt: DateTime.parse(json['expiresAt']),
+    views: json['views'] ?? 0,
+    rating: (json['rating'] ?? 0).toDouble(),
+    tags: List<String>.from(json['tags'] ?? []),
+    notesUrl: json['notesUrl'],
+    isPinned: json['isPinned'] ?? false,
+    downloadsCount: json['downloadsCount'] ?? 0,
+    allowedUserIds: List<String>.from(json['allowedUserIds'] ?? []),
+  );
 }
