@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../config/theme.dart';
+import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/animations/fade_animation.dart';
+import '../../widgets/animations/slide_animation.dart';
 import '../courses/courses_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -23,21 +27,30 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
       body: _screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
+        backgroundColor: AppColors.surfaceColor,
+        selectedItemColor: AppColors.primaryColor,
+        unselectedItemColor: AppColors.textLight,
+        elevation: 0,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school),
+            icon: Icon(Icons.school_outlined),
+            activeIcon: Icon(Icons.school),
             label: 'Courses',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -54,148 +67,194 @@ class DashboardTab extends StatelessWidget {
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, _) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade900, Colors.blue.shade600],
+              // Welcome Header
+              FadeAnimation(
+                child: Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.primaryColor,
+                            AppColors.secondaryColor,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.radiusLarge,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryColor.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Welcome Back!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          authProvider.user?.name ?? 'User',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            authProvider.user?.role.toUpperCase() ?? 'STUDENT',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                      padding: const EdgeInsets.all(AppConstants.paddingLarge),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome Back!',
+                            style: AppTextStyles.headingMedium.copyWith(
+                              color: AppColors.surfaceColor,
+                              fontSize: 28,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            authProvider.user?.name ?? 'Student',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.surfaceColor,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusSmall,
+                              ),
+                            ),
+                            child: Text(
+                              authProvider.user?.role.toUpperCase() ?? 'STUDENT',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.surfaceColor,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppConstants.paddingXLarge),
+
+              // Quick Stats
+              FadeAnimation(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Quick Stats',
+                      style: AppTextStyles.headingSmall.copyWith(
+                        fontSize: 20,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.paddingLarge),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: AppConstants.paddingMedium,
+                      crossAxisSpacing: AppConstants.paddingMedium,
+                      children: [
+                        _buildStatCard(
+                          title: 'Courses',
+                          value: '5',
+                          icon: Icons.school,
+                          color: AppColors.primaryColor,
+                        ),
+                        _buildStatCard(
+                          title: 'Videos',
+                          value: '24',
+                          icon: Icons.play_circle_outline,
+                          color: AppColors.accentColor,
+                        ),
+                        _buildStatCard(
+                          title: 'Completed',
+                          value: '12',
+                          icon: Icons.check_circle_outline,
+                          color: AppColors.successColor,
+                        ),
+                        _buildStatCard(
+                          title: 'Learning',
+                          value: '8h 30m',
+                          icon: Icons.timer_outlined,
+                          color: AppColors.secondaryColor,
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Quick Stats
-              const Text(
-                'Quick Stats',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: [
-                  _buildStatCard(
-                    'Courses',
-                    '5',
-                    Colors.blue,
-                    Icons.school,
-                  ),
-                  _buildStatCard(
-                    'Videos',
-                    '24',
-                    Colors.green,
-                    Icons.play_circle,
-                  ),
-                  _buildStatCard(
-                    'Completed',
-                    '12',
-                    Colors.orange,
-                    Icons.check_circle,
-                  ),
-                  _buildStatCard(
-                    'Learning',
-                    '8h 30m',
-                    Colors.purple,
-                    Icons.timer,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
+              const SizedBox(height: AppConstants.paddingXLarge),
 
               // Recent Courses
-              const Text(
-                'Recent Courses',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: ListTile(
-                  leading: Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.blue.shade900, Colors.blue.shade600],
+              FadeAnimation(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Recent Courses',
+                      style: AppTextStyles.headingSmall.copyWith(
+                        fontSize: 20,
                       ),
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
-                      Icons.school,
-                      color: Colors.white,
+                    const SizedBox(height: AppConstants.paddingMedium),
+                    SlideAnimation(
+                      direction: SlideDirection.fromBottom,
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusLarge,
+                          ),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(
+                            AppConstants.paddingMedium,
+                          ),
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  AppColors.primaryColor,
+                                  AppColors.secondaryColor,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.school,
+                              color: AppColors.surfaceColor,
+                            ),
+                          ),
+                          title: Text(
+                            'Flutter Development',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            '4 videos • 2h 30m',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 18,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  title: const Text('Flutter Development'),
-                  subtitle: const Text('4 videos • 2h 30m'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  ],
                 ),
               ),
             ],
@@ -205,36 +264,65 @@ class DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color, IconData icon) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: color.withValues(alpha: 0.1),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return SlideAnimation(
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.05),
+                color.withOpacity(0.02),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade600,
-            ),
+          padding: const EdgeInsets.all(AppConstants.paddingMedium),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: AppTextStyles.headingSmall.copyWith(
+                  color: color,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textLight,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
