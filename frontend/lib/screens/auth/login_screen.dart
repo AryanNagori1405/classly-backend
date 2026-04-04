@@ -43,13 +43,16 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-      
-      // Simulate API call
+
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login successful!')),
+            const SnackBar(
+              content: Text('✓ Login successful!'),
+              backgroundColor: AppColors.successColor,
+              duration: Duration(seconds: 2),
+            ),
           );
         }
       });
@@ -64,13 +67,16 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         backgroundColor: AppColors.backgroundColor,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppConstants.paddingLarge,
+            vertical: AppConstants.paddingMedium,
+          ),
           child: FadeAnimation(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,22 +89,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Welcome back!',
+                        'Welcome Back',
                         style: AppTextStyles.headingLarge.copyWith(
                           fontSize: 32,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Login as ${widget.selectedRole}',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textLight,
+                      const SizedBox(height: 12),
+                      RichText(
+                        text: TextSpan(
+                          text: 'Sign in as ',
+                          style: AppTextStyles.bodyMedium,
+                          children: [
+                            TextSpan(
+                              text: widget.selectedRole.toUpperCase(),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.primaryColor,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 50),
                 // Form
                 Form(
                   key: _formKey,
@@ -108,11 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       SlideAnimation(
                         direction: SlideDirection.fromLeft,
                         child: CustomTextField(
-                          label: AppStrings.email,
-                          hint: 'Enter your email',
+                          label: 'Email Address',
+                          hint: 'name@example.com',
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.email_outlined,
+                          prefixIcon: Icons.mail_outline,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Email is required';
@@ -124,16 +139,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       // Password Field
                       SlideAnimation(
                         direction: SlideDirection.fromRight,
                         child: CustomTextField(
-                          label: AppStrings.password,
+                          label: 'Password',
                           hint: 'Enter your password',
                           controller: _passwordController,
                           obscureText: !_showPassword,
-                          prefixIcon: Icons.lock_outlined,
+                          prefixIcon: Icons.lock_outline,
                           suffixIcon:
                               _showPassword ? Icons.visibility : Icons.visibility_off,
                           validator: (value) {
@@ -150,16 +165,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       // Forgot Password
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {
-                            // Handle forgot password
-                          },
+                          onPressed: () {},
                           child: Text(
-                            AppStrings.forgotPassword,
+                            'Forgot Password?',
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.primaryColor,
                               fontWeight: FontWeight.w600,
@@ -167,44 +180,47 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 32),
                       // Login Button
                       SlideAnimation(
                         direction: SlideDirection.fromBottom,
                         child: CustomButton(
-                          label: AppStrings.login,
+                          label: 'Sign In',
                           onPressed: _handleLogin,
                           isLoading: _isLoading,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       // Sign Up Link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            AppStrings.noAccount,
-                            style: AppTextStyles.bodySmall,
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (context) => SignupScreen(
-                                    selectedRole: widget.selectedRole,
+                      SlideAnimation(
+                        direction: SlideDirection.fromBottom,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Don\'t have an account? ',
+                              style: AppTextStyles.bodySmall,
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(
+                                    builder: (context) => SignupScreen(
+                                      selectedRole: widget.selectedRole,
+                                    ),
                                   ),
+                                );
+                              },
+                              child: Text(
+                                'Sign Up',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.primaryColor,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                              );
-                            },
-                            child: Text(
-                              AppStrings.signUp,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.primaryColor,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
