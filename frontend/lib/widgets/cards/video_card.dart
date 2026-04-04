@@ -17,7 +17,7 @@ class VideoCard extends StatelessWidget {
   String _formatDuration(int seconds) {
     int minutes = seconds ~/ 60;
     int secs = seconds % 60;
-    return '${minutes}m ${secs}s';
+    return '$minutes\'m ${secs}s';
   }
 
   @override
@@ -135,14 +135,14 @@ class VideoCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.visibility,
                               size: 14,
                               color: AppColors.textLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${video.views}',
+                              video.views.toString(),
                               style: AppTextStyles.caption.copyWith(
                                 color: AppColors.textLight,
                               ),
@@ -151,14 +151,14 @@ class VideoCard extends StatelessWidget {
                         ),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.thumb_up,
                               size: 14,
                               color: AppColors.accentColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${video.upvotes}',
+                              video.upvotes.toString(),
                               style: AppTextStyles.caption.copyWith(
                                 color: AppColors.accentColor,
                                 fontWeight: FontWeight.w600,
@@ -168,14 +168,14 @@ class VideoCard extends StatelessWidget {
                         ),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.download,
                               size: 14,
                               color: AppColors.secondaryColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${video.downloads}',
+                              video.downloads.toString(),
                               style: AppTextStyles.caption.copyWith(
                                 color: AppColors.secondaryColor,
                                 fontWeight: FontWeight.w600,
