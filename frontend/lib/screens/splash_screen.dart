@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/theme.dart';
+import '../utils/first_time_user.dart';
+import '../providers/auth_provider.dart';
 import 'welcome_screen.dart';
+import 'role_selection_screen.dart';
+import 'home/student_home.dart';
+import 'home/teacher_home.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -54,12 +60,47 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          SmoothPageTransition(page: const WelcomeScreen()),
-          (route) => false,
-        );
+        _navigateBasedOnUserState();
       }
     });
+  }
+
+  Future<void> _navigateBasedOnUserState() async {
+    final authProvider = context.read<AuthProvider>();
+    final hasSeenWelcome = await FirstTimeUserManager.hasSeenWelcome();
+
+    // Check if user is authenticated
+    if (authProvider.isAuthenticated && authProvider.user != null) {
+      // User is logged in - go directly to home
+      final userRole = authProvider.user!.role;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        SmoothPageTransition(
+          page: userRole == 'student'
+              ? const StudentHomeScreen()
+              : const TeacherHomeScreen(),
+        ),
+        (route) => false,
+      );
+    } else if (!hasSeenWelcome) {
+      // First time user - show welcome screen
+      await FirstTimeUserManager.markWelcomeSeen();
+
+      Navigator.of(context).pushAndRemoveUntil(
+        SmoothPageTransition(
+          page: const WelcomeScreen(),
+        ),
+        (route) => false,
+      );
+    } else {
+      // User has seen welcome - go to role selection
+      Navigator.of(context).pushAndRemoveUntil(
+        SmoothPageTransition(
+          page: const RoleSelectionScreen(),
+        ),
+        (route) => false,
+      );
+    }
   }
 
   @override
@@ -230,7 +271,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// Smooth Page Transition
 class SmoothPageTransition extends PageRouteBuilder {
   final Widget page;
 

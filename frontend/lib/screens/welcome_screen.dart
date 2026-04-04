@@ -2,22 +2,9 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../config/constants.dart';
 import 'role_selection_screen.dart';
-import 'home/student_home.dart';
-import 'home/teacher_home.dart';
 
 class WelcomeScreen extends StatefulWidget {
-  final String? userName;
-  final String? userRole;
-  final String? uid;
-  final bool showAfterSignup;
-
-  const WelcomeScreen({
-    Key? key,
-    this.userName,
-    this.userRole,
-    this.uid,
-    this.showAfterSignup = false,
-  }) : super(key: key);
+  const WelcomeScreen({Key? key}) : super(key: key);
 
   @override
   State<WelcomeScreen> createState() => _WelcomeScreenState();
@@ -124,15 +111,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
                 SizedBox(height: size.height * 0.05),
 
-                // Welcome Title - Show different text based on context
+                // Welcome Title
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: Column(
                     children: [
                       Text(
-                        widget.showAfterSignup
-                            ? 'Welcome to Classly, ${widget.userName}! 🎉'
-                            : 'Welcome to Classly 🎉',
+                        'Welcome to Classly 🎉',
                         style: AppTextStyles.headingMedium.copyWith(
                           fontSize: 30,
                           color: Colors.black87,
@@ -150,9 +135,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 FadeTransition(
                   opacity: _fadeAnimation,
                   child: Text(
-                    widget.showAfterSignup
-                        ? 'Your account has been created successfully!'
-                        : 'Your Classroom Lecture Sharing Platform',
+                    'Your Classroom Lecture Sharing Platform',
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.grey.shade500,
                       fontSize: 15,
@@ -221,24 +204,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   },
                   child: GestureDetector(
                     onTap: () {
-                      if (widget.showAfterSignup && widget.userRole != null) {
-                        // Go to home after signup
-                        Navigator.of(context).pushAndRemoveUntil(
-                          SmoothPageTransition(
-                            page: widget.userRole == 'student'
-                                ? const StudentHomeScreen()
-                                : const TeacherHomeScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      } else {
-                        // Go to role selection from initial welcome
-                        Navigator.of(context).push(
-                          SmoothPageTransition(
-                            page: const RoleSelectionScreen(),
-                          ),
-                        );
-                      }
+                      Navigator.of(context).push(
+                        SmoothPageTransition(
+                          page: const RoleSelectionScreen(),
+                        ),
+                      );
                     },
                     child: Container(
                       width: double.infinity,
@@ -265,38 +235,27 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () {
-                            if (widget.showAfterSignup && widget.userRole != null) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                SmoothPageTransition(
-                                  page: widget.userRole == 'student'
-                                      ? const StudentHomeScreen()
-                                      : const TeacherHomeScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            } else {
-                              Navigator.of(context).push(
-                                SmoothPageTransition(
-                                  page: const RoleSelectionScreen(),
-                                ),
-                              );
-                            }
+                            Navigator.of(context).push(
+                              SmoothPageTransition(
+                                page: const RoleSelectionScreen(),
+                              ),
+                            );
                           },
                           borderRadius: BorderRadius.circular(16),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                widget.showAfterSignup ? 'Get Started' : 'Get Started',
-                                style: const TextStyle(
+                                'Get Started',
+                                style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(
+                              SizedBox(width: 8),
+                              Icon(
                                 Icons.arrow_forward_rounded,
                                 color: Colors.white,
                                 size: 20,

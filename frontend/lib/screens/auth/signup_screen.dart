@@ -31,7 +31,7 @@ class _SignupScreenState extends State<SignupScreen>
   final _semesterController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _agreeToTerms = false;
@@ -131,15 +131,12 @@ class _SignupScreenState extends State<SignupScreen>
 
       if (mounted) {
         if (success) {
-          // Navigate to Welcome Screen with parameters
+          // Go directly to home (no welcome again)
           Navigator.of(context).pushAndRemoveUntil(
             SmoothPageTransition(
-              page: WelcomeScreen(
-                userName: _nameController.text.trim(),
-                userRole: widget.selectedRole,
-                uid: _uidController.text.trim(),
-                showAfterSignup: true,
-              ),
+              page: widget.selectedRole == 'student'
+                  ? const StudentHomeScreen()
+                  : const TeacherHomeScreen(),
             ),
             (route) => false,
           );
@@ -418,7 +415,8 @@ class _SignupScreenState extends State<SignupScreen>
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                          padding:
+                              const EdgeInsets.all(AppConstants.paddingMedium),
                           decoration: BoxDecoration(
                             color: AppColors.primaryColor.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(12),
@@ -432,7 +430,8 @@ class _SignupScreenState extends State<SignupScreen>
                               Checkbox(
                                 value: _agreeToTerms,
                                 onChanged: (value) {
-                                  setState(() => _agreeToTerms = value ?? false);
+                                  setState(
+                                      () => _agreeToTerms = value ?? false);
                                 },
                                 activeColor: AppColors.primaryColor,
                                 checkColor: Colors.white,
@@ -451,7 +450,7 @@ class _SignupScreenState extends State<SignupScreen>
                                     children: [
                                       TextSpan(
                                         text: 'Terms & Conditions',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           color: AppColors.primaryColor,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -577,7 +576,7 @@ class _SignupScreenState extends State<SignupScreen>
           ),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(
+            hintStyle: const TextStyle(
               color: AppColors.textLight,
               fontSize: 14,
             ),
@@ -591,9 +590,7 @@ class _SignupScreenState extends State<SignupScreen>
                       onShowPasswordChanged?.call(!showPassword);
                     },
                     child: Icon(
-                      showPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                      showPassword ? Icons.visibility : Icons.visibility_off,
                       color: AppColors.primaryColor.withOpacity(0.6),
                     ),
                   )
