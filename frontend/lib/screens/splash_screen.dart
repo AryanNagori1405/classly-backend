@@ -67,7 +67,8 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 3000),
       vsync: this,
     )..repeat();
-    _rotateAnimation = Tween<double>(begin: 0, end: 2).animate(_rotateController);
+    _rotateAnimation =
+        Tween<double>(begin: 0, end: 2).animate(_rotateController);
 
     // Pulse Animation (for glow effect)
     _pulseController = AnimationController(
@@ -117,7 +118,7 @@ class _SplashScreenState extends State<SplashScreen>
           (route) => false,
         );
       } else {
-        // Subsequent launches - go to role selection
+        // Not authenticated - always go to role selection (which leads to login)
         Navigator.of(context).pushAndRemoveUntil(
           SmoothPageTransition(
             page: const RoleSelectionScreen(),
@@ -146,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen>
         children: [
           // Premium Gradient Background
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
                   AppColors.primaryColor,
@@ -460,7 +461,9 @@ class _SplashScreenState extends State<SplashScreen>
     return AnimatedBuilder(
       animation: _rotateController,
       builder: (context, child) {
-        final opacity = sin((_rotateAnimation.value * 2 * pi) + (index * pi / 3)) * 0.5 + 0.5;
+        final opacity =
+            sin((_rotateAnimation.value * 2 * pi) + (index * pi / 3)) * 0.5 +
+                0.5;
         return Opacity(
           opacity: opacity,
           child: Container(

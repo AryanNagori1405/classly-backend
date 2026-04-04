@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final ApiService _apiService;
-  
+
   User? _user;
   String? _token;
   bool _isLoading = false;
@@ -24,26 +24,13 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   bool get isFirstTimeLogin => _isFirstTimeLogin;
 
-  // Mock user data for testing
+  /// Load user from SharedPreferences on app startup
   Future<void> _loadUserFromPrefs() async {
-    // In a real app, you would load from SharedPreferences
-    // For now, we'll use mock data
     try {
-      _user = User(
-        uid: 'STU001',
-        regId: 'REG001',
-        name: 'John Doe',
-        email: 'john@college.edu',
-        role: 'student',
-        department: 'Computer Science',
-        semester: '4',
-        profileImage: 'https://via.placeholder.com/100',
-        bio: 'Passionate learner',
-        coursesCount: 5,
-        videosCount: 24,
-        rating: 4.8,
-        createdAt: DateTime.now(),
-      );
+      // In a real app, load from SharedPreferences
+      // For now, start with no user (forces login)
+      _user = null;
+      _token = null;
       notifyListeners();
     } catch (e) {
       _error = 'Failed to load user data';
@@ -63,7 +50,7 @@ class AuthProvider extends ChangeNotifier {
       if (_useLocalStorage) {
         // Local storage mode - simulate login
         await Future.delayed(const Duration(seconds: 2));
-        
+
         _user = User(
           uid: 'STU${DateTime.now().millisecondsSinceEpoch}',
           regId: 'REG${DateTime.now().millisecondsSinceEpoch}',
@@ -131,7 +118,7 @@ class AuthProvider extends ChangeNotifier {
       if (_useLocalStorage) {
         // Local storage mode - simulate UID login
         await Future.delayed(const Duration(seconds: 2));
-        
+
         _user = User(
           uid: uid,
           regId: regId,
@@ -165,11 +152,15 @@ class AuthProvider extends ChangeNotifier {
           role: response['user']['role'] ?? role,
           department: response['user']['department'] ?? 'Unknown',
           semester: response['user']['semester'] ?? '1',
-          profileImage: response['user']['profileImage'] ?? 'https://via.placeholder.com/100',
+          profileImage: response['user']['profileImage'] ??
+              'https://via.placeholder.com/100',
           bio: response['user']['bio'] ?? '',
-          enrolledCourses: List<String>.from(response['user']['enrolledCourses'] ?? []),
-          joinedCommunities: List<String>.from(response['user']['joinedCommunities'] ?? []),
-          createdAt: DateTime.parse(response['user']['createdAt'] ?? DateTime.now().toIso8601String()),
+          enrolledCourses:
+              List<String>.from(response['user']['enrolledCourses'] ?? []),
+          joinedCommunities:
+              List<String>.from(response['user']['joinedCommunities'] ?? []),
+          createdAt: DateTime.parse(response['user']['createdAt'] ??
+              DateTime.now().toIso8601String()),
           isVerified: response['user']['isVerified'] ?? false,
         );
 
@@ -206,13 +197,15 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
 
       // If uid and regId are not provided, generate them
-      final finalUid = uid.isEmpty ? 'STU${DateTime.now().millisecondsSinceEpoch}' : uid;
-      final finalRegId = regId.isEmpty ? 'REG${DateTime.now().millisecondsSinceEpoch}' : regId;
+      final finalUid =
+          uid.isEmpty ? 'STU${DateTime.now().millisecondsSinceEpoch}' : uid;
+      final finalRegId =
+          regId.isEmpty ? 'REG${DateTime.now().millisecondsSinceEpoch}' : regId;
 
       if (_useLocalStorage) {
         // Local storage mode - simulate signup
         await Future.delayed(const Duration(seconds: 2));
-        
+
         _user = User(
           uid: finalUid,
           regId: finalRegId,
@@ -251,7 +244,8 @@ class AuthProvider extends ChangeNotifier {
           role: response['user']['role'] ?? role,
           department: response['user']['department'] ?? department,
           semester: response['user']['semester'] ?? semester,
-          profileImage: response['user']['profileImage'] ?? 'https://via.placeholder.com/100',
+          profileImage: response['user']['profileImage'] ??
+              'https://via.placeholder.com/100',
           bio: response['user']['bio'] ?? '',
           createdAt: DateTime.now(),
           isVerified: response['user']['isVerified'] ?? false,

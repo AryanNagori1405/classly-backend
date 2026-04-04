@@ -244,7 +244,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                       teacher: 'Prof. Smith',
                       daysRemaining: 1,
                       subject: 'Database',
-                      thumbnail: Icons.storage,
+                      thumbnail: Icons.storage                               ,
                     ),
                   ),
                   const SizedBox(height: AppConstants.paddingXLarge),
