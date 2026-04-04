@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class AppConstants {
   // App Info
   static const String appName = 'Classly';
@@ -46,6 +48,92 @@ class AppConstants {
   static const String routeVideoPlayer = '/video-player';
   static const String routeForum = '/forum';
   static const String routeProfile = '/profile';
+
+  // ===== CONSTRAINTS FOR RESPONSIVE DESIGN =====
+
+  // Screen sizes for responsive design
+  static const double mobileBreakpoint = 600;
+  static const double tabletBreakpoint = 900;
+  static const double desktopBreakpoint = 1200;
+
+  // Max width for content
+  static const double maxContentWidth = 500;
+  static const double maxTabletWidth = 800;
+
+  // Min sizes
+  static const double minButtonHeight = 48;
+  static const double minTouchTarget = 48;
+
+  // Image sizes
+  static const double avatarSizeSmall = 40;
+  static const double avatarSizeMedium = 60;
+  static const double avatarSizeLarge = 100;
+
+  // Card dimensions
+  static const double courseCardHeight = 240;
+  static const double videoCardHeight = 280;
+  static const double statsCardAspectRatio = 1.1;
+
+  // Input field heights
+  static const double inputFieldHeight = 56;
+  static const double textFieldHeight = 56;
+
+  // Icon sizes
+  static const double iconSizeSmall = 16;
+  static const double iconSizeMedium = 24;
+  static const double iconSizeLarge = 32;
+  static const double iconSizeXLarge = 48;
+
+  // Bottom navigation height
+  static const double bottomNavHeight = 80;
+  static const double appBarHeight = 56;
+
+  // Spacing multipliers
+  static const double spacingUnit = 8;
+
+  // Aspect ratios
+  static const double courseImageAspectRatio = 16 / 9;
+  static const double videoThumbnailAspectRatio = 16 / 9;
+
+  // Border widths
+  static const double borderWidthThin = 0.8;
+  static const double borderWidthMedium = 1.2;
+  static const double borderWidthThick = 2.0;
+
+  // Shadow elevation
+  static const double shadowElevationSmall = 2;
+  static const double shadowElevationMedium = 4;
+  static const double shadowElevationLarge = 8;
+  static const double shadowElevationXLarge = 12;
+
+  // Opacity values
+  static const double opacityDisabled = 0.5;
+  static const double opacityHover = 0.08;
+  static const double opacityActive = 0.12;
+
+  // Animation delays (for staggered animations)
+  static const int animationDelayUnit = 100; // milliseconds
+
+  // Responsive helpers
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < mobileBreakpoint;
+
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= mobileBreakpoint &&
+      MediaQuery.of(context).size.width < desktopBreakpoint;
+
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= desktopBreakpoint;
+
+  static double getMaxWidth(BuildContext context) {
+    if (isDesktop(context)) {
+      return maxTabletWidth;
+    } else if (isTablet(context)) {
+      return maxTabletWidth;
+    } else {
+      return maxContentWidth;
+    }
+  }
 }
 
 class AppStrings {

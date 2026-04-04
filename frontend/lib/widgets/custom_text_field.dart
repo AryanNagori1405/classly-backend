@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../config/constraints.dart';
+import '../config/constants.dart';
 
 class CustomTextField extends StatefulWidget {
   final String label;
@@ -71,6 +71,11 @@ class _CustomTextFieldState extends State<CustomTextField>
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = AppConstants.isMobile(context);
+    final iconSize = isMobile
+        ? AppConstants.iconSizeMedium
+        : AppConstants.iconSizeLarge;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -81,7 +86,7 @@ class _CustomTextFieldState extends State<CustomTextField>
             color: AppColors.textDark,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppConstants.spacingUnit * 1.25),
         Focus(
           onFocusChange: (hasFocus) {
             setState(() => _isFocused = hasFocus);
@@ -96,7 +101,9 @@ class _CustomTextFieldState extends State<CustomTextField>
             builder: (context, child) {
               return Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.radiusMedium,
+                  ),
                   boxShadow: [
                     if (_isFocused)
                       BoxShadow(
@@ -107,6 +114,9 @@ class _CustomTextFieldState extends State<CustomTextField>
                         spreadRadius: 2 * _focusAnimation.value,
                       ),
                   ],
+                ),
+                constraints: const BoxConstraints(
+                  minHeight: AppConstants.inputFieldHeight,
                 ),
                 child: TextFormField(
                   controller: widget.controller,
@@ -127,7 +137,7 @@ class _CustomTextFieldState extends State<CustomTextField>
                             color: _isFocused
                                 ? AppColors.primaryColor
                                 : AppColors.textLight,
-                            size: 20,
+                            size: iconSize,
                           )
                         : null,
                     suffixIcon: widget.suffixIcon != null
@@ -136,29 +146,35 @@ class _CustomTextFieldState extends State<CustomTextField>
                             color: _isFocused
                                 ? AppColors.primaryColor
                                 : AppColors.textLight,
-                            size: 20,
+                            size: iconSize,
                           )
                         : null,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusMedium,
+                      ),
                       borderSide: const BorderSide(
                         color: AppColors.borderColor,
-                        width: 1.2,
+                        width: AppConstants.borderWidthMedium,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusMedium,
+                      ),
                       borderSide: BorderSide(
                         color: AppColors.borderColor.withOpacity(0.8),
-                        width: 1.2,
+                        width: AppConstants.borderWidthMedium,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusMedium,
+                      ),
                       borderSide: BorderSide(
                         color: _borderColorAnimation.value ??
                             AppColors.primaryColor,
-                        width: 2.0,
+                        width: AppConstants.borderWidthThick,
                       ),
                     ),
                     fillColor: AppColors.backgroundColor,

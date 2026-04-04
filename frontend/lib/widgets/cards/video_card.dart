@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../config/constraints.dart';
+import '../../config/constants.dart';
 import '../../models/video_model.dart';
 import '../animations/scale_animation.dart';
 

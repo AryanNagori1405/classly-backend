@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../config/constraints.dart';
+import '../config/constants.dart';
 
 class CustomButton extends StatefulWidget {
   final String label;
@@ -20,7 +20,7 @@ class CustomButton extends StatefulWidget {
     this.isDisabled = false,
     this.type = ButtonType.primary,
     this.width,
-    this.height = 56,
+    this.height,
     this.icon,
   }) : super(key: key);
 
@@ -69,6 +69,10 @@ class _CustomButtonState extends State<CustomButton>
 
   @override
   Widget build(BuildContext context) {
+    // Use constants for responsive sizing
+    final height = widget.height ?? AppConstants.minButtonHeight;
+    final width = widget.width ?? double.infinity;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -80,8 +84,11 @@ class _CustomButtonState extends State<CustomButton>
           return ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              width: widget.width ?? double.infinity,
-              height: widget.height,
+              width: width,
+              height: height,
+              constraints: const BoxConstraints(
+                minHeight: AppConstants.minButtonHeight,
+              ),
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
@@ -89,7 +96,10 @@ class _CustomButtonState extends State<CustomButton>
                       0.3 * _elevationAnimation.value / 8,
                     ),
                     blurRadius: _elevationAnimation.value,
-                    offset: Offset(0, _elevationAnimation.value / 2),
+                    offset: Offset(
+                      0,
+                      _elevationAnimation.value / 2,
+                    ),
                   ),
                 ],
               ),
@@ -118,10 +128,12 @@ class _CustomButtonState extends State<CustomButton>
                               if (widget.icon != null) ...[
                                 Icon(
                                   widget.icon,
-                                  size: 20,
+                                  size: AppConstants.iconSizeMedium,
                                   color: _getTextColor(),
                                 ),
-                                const SizedBox(width: 10),
+                                const SizedBox(
+                                  width: 10,
+                                ),
                               ],
                               Text(
                                 widget.label,
@@ -156,7 +168,7 @@ class _CustomButtonState extends State<CustomButton>
     if (widget.isDisabled) {
       return BoxDecoration(
         color: AppColors.borderColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
       );
     }
 
@@ -168,21 +180,21 @@ class _CustomButtonState extends State<CustomButton>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
         );
       case ButtonType.secondary:
         return BoxDecoration(
           color: AppColors.secondaryColor,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
         );
       case ButtonType.outline:
         return BoxDecoration(
           color: Colors.transparent,
           border: Border.all(
             color: AppColors.primaryColor,
-            width: 2,
+            width: 2.0,
           ),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
         );
     }
   }
