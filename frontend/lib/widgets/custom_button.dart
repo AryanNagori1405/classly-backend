@@ -32,15 +32,21 @@ class _CustomButtonState extends State<CustomButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  late Animation<double> _elevationAnimation;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: AppConstants.durationShort,
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _elevationAnimation = Tween<double>(begin: 0, end: 8).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
@@ -52,7 +58,9 @@ class _CustomButtonState extends State<CustomButton>
   }
 
   void _onTapDown(TapDownDetails details) {
-    _animationController.forward();
+    if (!widget.isDisabled && !widget.isLoading) {
+      _animationController.forward();
+    }
   }
 
   void _onTapUp(TapUpDetails details) {
@@ -62,60 +70,96 @@ class _CustomButtonState extends State<CustomButton>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: widget.isDisabled || widget.isLoading ? null : _onTapDown,
-      onTapUp: widget.isDisabled || widget.isLoading ? null : _onTapUp,
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
       onTapCancel: _animationController.reverse,
       onTap: widget.isDisabled || widget.isLoading ? null : widget.onPressed,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          width: widget.width ?? double.infinity,
-          height: widget.height,
-          decoration: _getButtonDecoration(),
-          child: Material(
-            color: Colors.transparent,
-            child: Center(
-              child: widget.isLoading
-                  ? SizedBox(
-                      height: 24,
-                      width: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          widget.type == ButtonType.primary
-                              ? AppColors.surfaceColor
-                              : AppColors.primaryColor,
-                        ),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.icon != null) ...[
-                          Icon(
-                            widget.icon,
-                            size: 20,
-                            color: _getTextColor(),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Text(
-                          widget.label,
-                          style: AppTextStyles.buttonText.copyWith(
-                            color: _getTextColor(),
-                          ),
-                        ),
-                      ],
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              width: widget.width ?? double.infinity,
+              height: widget.height,
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: _getButtonColor().withOpacity(
+                      0.3 * _elevationAnimation.value / 8,
                     ),
+                    blurRadius: _elevationAnimation.value,
+                    offset: Offset(0, _elevationAnimation.value / 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: _getButtonDecoration(),
+                  child: Center(
+                    child: widget.isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                widget.type == ButtonType.primary
+                                    ? AppColors.surfaceColor
+                                    : AppColors.primaryColor,
+                              ),
+                            ),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.icon != null) ...[
+                                Icon(
+                                  widget.icon,
+                                  size: 20,
+                                  color: _getTextColor(),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+                              Text(
+                                widget.label,
+                                style: AppTextStyles.buttonText.copyWith(
+                                  color: _getTextColor(),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
+  Color _getButtonColor() {
+    switch (widget.type) {
+      case ButtonType.primary:
+        return AppColors.primaryColor;
+      case ButtonType.secondary:
+        return AppColors.secondaryColor;
+      case ButtonType.outline:
+        return AppColors.primaryColor;
+    }
+  }
+
   BoxDecoration _getButtonDecoration() {
+    if (widget.isDisabled) {
+      return BoxDecoration(
+        color: AppColors.borderColor,
+        borderRadius: BorderRadius.circular(14),
+      );
+    }
+
     switch (widget.type) {
       case ButtonType.primary:
         return BoxDecoration(
@@ -124,37 +168,21 @@ class _CustomButtonState extends State<CustomButton>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryColor.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(14),
         );
       case ButtonType.secondary:
         return BoxDecoration(
           color: AppColors.secondaryColor,
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.secondaryColor.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(14),
         );
       case ButtonType.outline:
         return BoxDecoration(
           color: Colors.transparent,
           border: Border.all(
-            color: widget.isDisabled
-                ? AppColors.borderColor
-                : AppColors.primaryColor,
+            color: AppColors.primaryColor,
             width: 2,
           ),
-          borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+          borderRadius: BorderRadius.circular(14),
         );
     }
   }
