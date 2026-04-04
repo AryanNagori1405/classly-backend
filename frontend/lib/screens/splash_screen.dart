@@ -3,6 +3,7 @@ import '../config/theme.dart';
 import '../widgets/animations/scale_animation.dart';
 import '../widgets/animations/fade_animation.dart';
 import 'role_selection_screen.dart';
+import '../../config/constraints.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

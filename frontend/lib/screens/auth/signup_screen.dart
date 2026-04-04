@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../config/constants.dart';
+import '../../config/constraints.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/animations/fade_animation.dart';
@@ -26,8 +26,8 @@ class _SignupScreenState extends State<SignupScreen> {
   late TextEditingController _passwordController;
   late TextEditingController _confirmPasswordController;
   bool _isLoading = false;
-  bool _showPassword = false;
-  bool _showConfirmPassword = false;
+  final bool _showPassword = false;
+  final bool _showConfirmPassword = false;
   bool _agreeToTerms = false;
 
   @override
