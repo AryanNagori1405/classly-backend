@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
-import '../welcome_screen.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
 

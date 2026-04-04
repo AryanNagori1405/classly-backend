@@ -4,7 +4,6 @@ import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_flow.dart';
-import '../../utils/first_time_user.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 import '../splash_screen.dart';

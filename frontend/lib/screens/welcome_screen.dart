@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../config/constants.dart';
 import 'role_selection_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {

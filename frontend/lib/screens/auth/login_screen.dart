@@ -7,10 +7,6 @@ import '../../providers/auth_provider.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
 import 'signup_screen.dart';
-import '../welcome_screen.dart';
-import '../home/student_home.dart';
-import '../home/teacher_home.dart';
-import '../role_selection_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String selectedRole;
