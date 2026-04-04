@@ -341,350 +341,757 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-    Widget _buildPremiumHeader(AuthProvider authProvider) {
+  Widget _buildPremiumHeader(AuthProvider authProvider) {
     final user = authProvider.user;
-    
-    return Container(
-      decoration: BoxDecoration(
-        gradient: AppGradients.primaryGradient,
-        borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryColor.withOpacity(0.3),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-            spreadRadius: 4,
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(AppConstants.paddingXLarge),
-      child: Column(
-        children: [
-          // Avatar with Float Animation
-          AnimatedBuilder(
-            animation: _floatAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, _floatAnimation.value),
-                child: Container(
-                  width: 110,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(
-                      color: Colors.white,
-                      width: 4,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 55,
-                    color: AppColors.primaryColor,
-                  ),
-                ),
-              );
-            },
-          ),
 
-          const SizedBox(height: 24),
-
-          // Name
-          Text(
-            user?.name ?? 'User',
-            style: AppTextStyles.headingMedium.copyWith(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.3,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 10),
-
-          // Email
-          Text(
-            user?.email ?? 'email@example.com',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.white.withOpacity(0.9),
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 18),
-
-          // Role Badge with Icon
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 12,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.35),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  user?.role == 'student'
-                      ? Icons.person_rounded
-                      : Icons.school_rounded,
-                  size: 18,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  user?.role.toUpperCase() ?? 'STUDENT',
-                  style: AppTextStyles.caption.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Student Details Card
-          _buildStudentDetailsCard(user),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStudentDetailsCard(User? user) {
-    if (user == null) return const SizedBox();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.25),
-          width: 1.5,
-        ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title
-          Text(
-            user.role == 'student' ? 'Student Details' : 'Instructor Details',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              letterSpacing: 0.3,
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          // UID Row
-          _buildDetailRow(
-            icon: Icons.badge_rounded,
-            label: 'UID',
-            value: user.uid,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Registration ID Row
-          _buildDetailRow(
-            icon: Icons.assignment_rounded,
-            label: 'Registration ID',
-            value: user.regId,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Department Row
-          _buildDetailRow(
-            icon: Icons.business_rounded,
-            label: 'Department',
-            value: user.department,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Semester Row
-          _buildDetailRow(
-            icon: Icons.school_rounded,
-            label: 'Semester',
-            value: user.semester,
-          ),
-
-          if (user.role == 'teacher') ...[
-            const SizedBox(height: 12),
-            // Divider
-            Container(
-              height: 1,
-              color: Colors.white.withOpacity(0.15),
-            ),
-            const SizedBox(height: 12),
-
-            // Courses Count (for teachers)
-            _buildDetailRow(
-              icon: Icons.book_rounded,
-              label: 'Courses Created',
-              value: user.coursesCount.toString(),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Videos Count (for teachers)
-            _buildDetailRow(
-              icon: Icons.video_library_rounded,
-              label: 'Videos Uploaded',
-              value: user.videosCount.toString(),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Rating (for teachers)
-            _buildDetailRow(
-              icon: Icons.star_rounded,
-              label: 'Rating',
-              value: '${user.rating.toStringAsFixed(1)} ⭐',
-              valueColor: const Color(0xFFFCD34D),
-            ),
-          ] else ...[
-            const SizedBox(height: 12),
-            // Divider
-            Container(
-              height: 1,
-              color: Colors.white.withOpacity(0.15),
-            ),
-            const SizedBox(height: 12),
-
-            // Enrolled Courses (for students)
-            _buildDetailRow(
-              icon: Icons.library_books_rounded,
-              label: 'Enrolled Courses',
-              value: user.enrolledCourses.length.toString(),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Communities (for students)
-            _buildDetailRow(
-              icon: Icons.groups_rounded,
-              label: 'Communities Joined',
-              value: user.joinedCommunities.length.toString(),
-            ),
-          ],
-
-          if (user.bio.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            // Divider
-            Container(
-              height: 1,
-              color: Colors.white.withOpacity(0.15),
-            ),
-            const SizedBox(height: 12),
-
-            // Bio Section
-            Text(
-              'About',
-              style: AppTextStyles.caption.copyWith(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              user.bio,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: Colors.white.withOpacity(0.9),
-                fontWeight: FontWeight.w500,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color valueColor = Colors.white,
-  }) {
-    return Row(
+    return Column(
       children: [
+        // Main Profile Card
         Container(
-          width: 36,
-          height: 36,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Icon(
-            icon,
-            size: 18,
-            color: Colors.white.withOpacity(0.85),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: AppTextStyles.caption.copyWith(
-                  color: Colors.white.withOpacity(0.65),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.2,
-                ),
+            gradient: AppGradients.primaryGradient,
+            borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryColor.withOpacity(0.3),
+                blurRadius: 32,
+                offset: const Offset(0, 12),
+                spreadRadius: 4,
               ),
-              const SizedBox(height: 4),
+            ],
+          ),
+          padding: const EdgeInsets.all(AppConstants.paddingXLarge),
+          child: Column(
+            children: [
+              // Avatar with Float Animation
+              AnimatedBuilder(
+                animation: _floatAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _floatAnimation.value),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Glow effect
+                        Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        // Avatar
+                        Container(
+                          width: 110,
+                          height: 110,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 4,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.25),
+                                blurRadius: 24,
+                                offset: const Offset(0, 12),
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.person_rounded,
+                            size: 55,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                        // Role Badge (floating)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: user?.role == 'student'
+                                  ? const Color(0xFF06B6D4)
+                                  : const Color(0xFF8B5CF6),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              user?.role == 'student'
+                                  ? Icons.person_rounded
+                                  : Icons.school_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 24),
+
+              // Name
               Text(
-                value,
+                user?.name ?? 'User',
+                style: AppTextStyles.headingMedium.copyWith(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 10),
+
+              // Email
+              Text(
+                user?.email ?? 'email@example.com',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: valueColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 18),
+
+              // Status Badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.greenAccent,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.greenAccent.withOpacity(0.6),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      user?.isVerified ?? false ? 'Verified' : 'Not Verified',
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+
+        const SizedBox(height: 20),
+
+        // Unique Details Section
+        if (user?.role == 'student')
+          _buildStudentDetailsUnique(user)
+        else
+          _buildTeacherDetailsUnique(user),
       ],
+    );
+  }
+
+  Widget _buildStudentDetailsUnique(User? user) {
+    if (user == null) return const SizedBox();
+
+    return Column(
+      children: [
+        // Academic Info Cards
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryColor.withOpacity(0.2),
+                          AppColors.primaryColor.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryColor.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.book_rounded,
+                      color: AppColors.primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Academic Information',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Timeline Style Details
+              _buildTimelineItem(
+                number: '1',
+                label: 'UID',
+                value: user.uid,
+                icon: Icons.badge_rounded,
+                color: AppColors.primaryColor,
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '2',
+                label: 'Registration ID',
+                value: user.regId,
+                icon: Icons.assignment_rounded,
+                color: const Color(0xFF06B6D4),
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '3',
+                label: 'Department',
+                value: user.department,
+                icon: Icons.business_rounded,
+                color: const Color(0xFF8B5CF6),
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '4',
+                label: 'Semester',
+                value: user.semester,
+                icon: Icons.school_rounded,
+                color: const Color(0xFFF59E0B),
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Stats Row
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                label: 'Courses',
+                value: user.enrolledCourses.length.toString(),
+                icon: Icons.library_books_rounded,
+                color: const Color(0xFF06B6D4),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                label: 'Communities',
+                value: user.joinedCommunities.length.toString(),
+                icon: Icons.groups_rounded,
+                color: const Color(0xFF8B5CF6),
+              ),
+            ),
+          ],
+        ),
+
+        if (user.bio.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildBioCard(user.bio),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTeacherDetailsUnique(User? user) {
+    if (user == null) return const SizedBox();
+
+    return Column(
+      children: [
+        // Achievement Cards
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppConstants.radiusXLarge),
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryColor.withOpacity(0.2),
+                          AppColors.primaryColor.withOpacity(0.05),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.primaryColor.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.school_rounded,
+                      color: AppColors.primaryColor,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Instructor Profile',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // Timeline Style Details
+              _buildTimelineItem(
+                number: '1',
+                label: 'UID',
+                value: user.uid,
+                icon: Icons.badge_rounded,
+                color: AppColors.primaryColor,
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '2',
+                label: 'Registration ID',
+                value: user.regId,
+                icon: Icons.assignment_rounded,
+                color: const Color(0xFF06B6D4),
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '3',
+                label: 'Department',
+                value: user.department,
+                icon: Icons.business_rounded,
+                color: const Color(0xFF8B5CF6),
+              ),
+
+              _buildTimelineConnector(),
+
+              _buildTimelineItem(
+                number: '4',
+                label: 'Specialization',
+                value: user.semester,
+                icon: Icons.star_rounded,
+                color: const Color(0xFFFCD34D),
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // Achievement Badges Row
+        Row(
+          children: [
+            Expanded(
+              child: _buildAchievementBadge(
+                label: 'Courses',
+                value: user.coursesCount.toString(),
+                icon: Icons.book_rounded,
+                color: const Color(0xFF10B981),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildAchievementBadge(
+                label: 'Videos',
+                value: user.videosCount.toString(),
+                icon: Icons.video_library_rounded,
+                color: const Color(0xFFEF4444),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildAchievementBadge(
+                label: 'Rating',
+                value: '${user.rating.toStringAsFixed(1)}⭐',
+                icon: Icons.star_rounded,
+                color: const Color(0xFFFCD34D),
+              ),
+            ),
+          ],
+        ),
+
+        if (user.bio.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildBioCard(user.bio),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required String number,
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+    bool isLast = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Number Badge
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color, color.withOpacity(0.7)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 16),
+
+        // Content
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withOpacity(0.15),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, size: 18, color: color),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: AppTextStyles.caption.copyWith(
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTimelineConnector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Container(
+        width: 2,
+        height: 12,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryColor.withOpacity(0.5),
+              AppColors.primaryColor.withOpacity(0.1),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withOpacity(0.2), color.withOpacity(0.05)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withOpacity(0.2),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: AppTextStyles.headingSmall.copyWith(
+              color: color,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAchievementBadge({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: AppTextStyles.headingSmall.copyWith(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBioCard(String bio) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.primaryColor.withOpacity(0.2),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  Icons.description_rounded,
+                  color: AppColors.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'About',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            bio,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
