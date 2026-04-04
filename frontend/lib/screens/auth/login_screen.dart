@@ -1,4 +1,3 @@
-import 'package:classly_frontend/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
