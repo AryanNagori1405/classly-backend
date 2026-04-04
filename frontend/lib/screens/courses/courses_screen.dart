@@ -4,7 +4,6 @@ import '../../config/constants.dart';
 import '../../models/course_model.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
-import '../../widgets/cards/course_card.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({Key? key}) : super(key: key);
@@ -14,14 +13,21 @@ class CoursesScreen extends StatefulWidget {
 }
 
 class _CoursesScreenState extends State<CoursesScreen> {
-  // Mock data for testing
   late List<Course> _courses;
   String _selectedFilter = 'all';
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     _loadMockCourses();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _loadMockCourses() {
@@ -82,14 +88,39 @@ class _CoursesScreenState extends State<CoursesScreen> {
         isEnrolled: false,
         createdAt: DateTime.now(),
       ),
+      Course(
+        id: 5,
+        title: 'Data Science Fundamentals',
+        description: 'Learn data science with Python',
+        instructor: 'Mike Chen',
+        thumbnail: 'https://via.placeholder.com/300x200?text=DataScience',
+        videosCount: 28,
+        enrolledCount: 523,
+        rating: 4.7,
+        level: 'intermediate',
+        tags: ['Data Science', 'Python'],
+        isEnrolled: false,
+        createdAt: DateTime.now(),
+      ),
     ];
   }
 
   List<Course> get _filteredCourses {
-    if (_selectedFilter == 'enrolled') {
-      return _courses.where((course) => course.isEnrolled).toList();
+    var filtered = _selectedFilter == 'enrolled'
+        ? _courses.where((course) => course.isEnrolled).toList()
+        : _courses;
+
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered
+          .where((course) =>
+              course.title.toLowerCase().contains(
+                  _searchController.text.toLowerCase()) ||
+              course.instructor.toLowerCase().contains(
+                  _searchController.text.toLowerCase()))
+          .toList();
     }
-    return _courses;
+
+    return filtered;
   }
 
   @override
@@ -97,65 +128,119 @@ class _CoursesScreenState extends State<CoursesScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surfaceColor,
+        backgroundColor: AppColors.backgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Courses',
-          style: AppTextStyles.headingMedium,
+          style: AppTextStyles.headingMedium.copyWith(
+            fontSize: 24,
+          ),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.all(AppConstants.paddingMedium),
-            child: Icon(
-              Icons.search,
-              color: AppColors.textDark,
+            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.borderColor,
+                  width: 1.2,
+                ),
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: AppColors.primaryColor,
+                size: 20,
+              ),
             ),
           ),
         ],
       ),
       body: Column(
         children: [
+          // Search Bar
+          FadeAnimation(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.paddingLarge,
+                vertical: AppConstants.paddingMedium,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.borderColor,
+                    width: 1.2,
+                  ),
+                  color: AppColors.surfaceColor,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: AppColors.shadowColor,
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) => setState(() {}),
+                  decoration: const InputDecoration(
+                    hintText: 'Search courses...',
+                    hintStyle: AppTextStyles.bodyMedium,
+                    prefixIcon: Icon(
+                      Icons.search_outlined,
+                      color: AppColors.textLight,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium,
+                ),
+              ),
+            ),
+          ),
+
           // Filter Chips
           FadeAnimation(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.paddingMedium,
+                horizontal: AppConstants.paddingLarge,
                 vertical: AppConstants.paddingMedium,
               ),
               child: Row(
                 children: [
                   _buildFilterChip('All Courses', 'all'),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 10),
                   _buildFilterChip('My Courses', 'enrolled'),
                 ],
               ),
             ),
           ),
+
           // Courses List
           Expanded(
             child: _filteredCourses.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
-                    padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.paddingLarge,
+                      vertical: AppConstants.paddingMedium,
+                    ),
                     itemCount: _filteredCourses.length,
                     itemBuilder: (context, index) {
                       return SlideAnimation(
                         direction: index.isEven
                             ? SlideDirection.fromLeft
                             : SlideDirection.fromRight,
-                        child: CourseCard(
-                          course: _filteredCourses[index],
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Opened ${_filteredCourses[index].title}',
-                                ),
-                                duration: const Duration(seconds: 1),
-                              ),
-                            );
-                          },
+                        child: _buildCourseItem(
+                          _filteredCourses[index],
+                          index,
                         ),
                       );
                     },
@@ -172,19 +257,27 @@ class _CoursesScreenState extends State<CoursesScreen> {
       onTap: () => setState(() => _selectedFilter = value),
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
+          horizontal: 18,
+          vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primaryColor
-              : AppColors.surfaceColor,
+          color: isSelected ? AppColors.primaryColor : AppColors.surfaceColor,
           border: Border.all(
             color: isSelected
                 ? AppColors.primaryColor
                 : AppColors.borderColor,
+            width: 1.2,
           ),
-          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
@@ -192,7 +285,194 @@ class _CoursesScreenState extends State<CoursesScreen> {
             color: isSelected
                 ? AppColors.surfaceColor
                 : AppColors.textDark,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCourseItem(Course course, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+        border: Border.all(
+          color: AppColors.borderColor,
+          width: 1.2,
+        ),
+        color: AppColors.surfaceColor,
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Opened ${course.title}'),
+                backgroundColor: AppColors.primaryColor,
+                duration: const Duration(seconds: 1),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Thumbnail
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        color: AppColors.backgroundColor,
+                        child: course.thumbnail != null
+                            ? Image.network(
+                                course.thumbnail!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.book_outlined,
+                                      color: AppColors.textLight,
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.book_outlined,
+                                  color: AppColors.textLight,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Course Info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            course.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'by ${course.instructor}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textLight,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                size: 16,
+                                color: AppColors.warningColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                course.rating.toStringAsFixed(1),
+                                style: AppTextStyles.caption.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.borderColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${course.videosCount} videos',
+                                style: AppTextStyles.caption,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (course.isEnrolled)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.successColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.successColor.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'Enrolled',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.successColor,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Tags
+                Wrap(
+                  spacing: 6,
+                  children: course.tags
+                      .take(2)
+                      .map(
+                        (tag) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppColors.primaryColor
+                                  .withOpacity(0.2),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            tag,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -204,21 +484,29 @@ class _CoursesScreenState extends State<CoursesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.school_outlined,
-            size: 80,
-            color: AppColors.textLight.withOpacity(0.5),
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.school_outlined,
+              size: 40,
+              color: AppColors.primaryColor,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
             'No Courses Found',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.textLight,
+              color: AppColors.textDark,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Start learning by exploring courses',
+            'Try different filters or search',
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textLight,
             ),
