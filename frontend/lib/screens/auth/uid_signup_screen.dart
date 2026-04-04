@@ -5,25 +5,34 @@ import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends StatefulWidget {
+class UIDSignupScreen extends StatefulWidget {
   final String selectedRole;
 
-  const LoginScreen({
+  const UIDSignupScreen({
     Key? key,
     required this.selectedRole,
   }) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<UIDSignupScreen> createState() => _UIDSignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _UIDSignupScreenState extends State<UIDSignupScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _uidController = TextEditingController();
   final _regIdController = TextEditingController();
+  final _departmentController = TextEditingController();
+  final _semesterController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  
+  bool _showPassword = false;
+  bool _showConfirmPassword = false;
+  bool _agreeToTerms = false;
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -72,19 +81,50 @@ class _LoginScreenState extends State<LoginScreen>
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
+    _nameController.dispose();
+    _emailController.dispose();
     _uidController.dispose();
     _regIdController.dispose();
+    _departmentController.dispose();
+    _semesterController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleLogin() async {
+  void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
+      if (!_agreeToTerms) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please agree to terms and conditions'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+        return;
+      }
+
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Passwords do not match'),
+            backgroundColor: AppColors.errorColor,
+          ),
+        );
+        return;
+      }
+
       final authProvider = context.read<AuthProvider>();
 
-      final success = await authProvider.loginWithUID(
+      final success = await authProvider.signup(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        role: widget.selectedRole,
         uid: _uidController.text.trim(),
         regId: _regIdController.text.trim(),
-        role: widget.selectedRole,
+        department: _departmentController.text.trim(),
+        semester: _semesterController.text.trim(),
       );
 
       if (mounted) {
@@ -103,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                authProvider.error ?? 'Login failed',
+                authProvider.error ?? 'Signup failed',
               ),
               backgroundColor: AppColors.errorColor,
               duration: const Duration(seconds: 3),
@@ -133,14 +173,14 @@ class _LoginScreenState extends State<LoginScreen>
                   key: _formKey,
                   child: Column(
                     children: [
-                      SizedBox(height: size.height * 0.05),
+                      SizedBox(height: size.height * 0.03),
 
                       // Logo Animation
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: Container(
-                          width: 120,
-                          height: 120,
+                          width: 100,
+                          height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppColors.primaryColor.withOpacity(0.1),
@@ -158,22 +198,22 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           child: const Icon(
                             Icons.school,
-                            size: 60,
+                            size: 50,
                             color: AppColors.primaryColor,
                           ),
                         ),
                       ),
 
-                      SizedBox(height: size.height * 0.04),
+                      SizedBox(height: size.height * 0.02),
 
                       // Title
                       const Text(
-                        'Classly',
+                        'Create Account',
                         style: TextStyle(
-                          fontSize: 36,
+                          fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: AppColors.primaryColor,
-                          letterSpacing: 2,
+                          letterSpacing: 1,
                         ),
                       ),
 
@@ -181,9 +221,9 @@ class _LoginScreenState extends State<LoginScreen>
 
                       // Subtitle
                       Text(
-                        'Classroom Lecture Sharing',
+                        'Join Classly Community',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.grey.shade600,
                           fontStyle: FontStyle.italic,
                         ),
@@ -205,7 +245,7 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                         child: Text(
-                          'Signing in as ${widget.selectedRole.toUpperCase()}',
+                          'Signing up as ${widget.selectedRole.toUpperCase()}',
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.primaryColor,
@@ -214,84 +254,156 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
 
-                      SizedBox(height: size.height * 0.08),
+                      SizedBox(height: size.height * 0.04),
+
+                      // Name Field
+                      _buildAnimatedTextField(
+                        controller: _nameController,
+                        hintText: 'Full Name',
+                        icon: Icons.person_outline,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Name is required';
+                          }
+                          return null;
+                        },
+                        delay: 0,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Email Field
+                      _buildAnimatedTextField(
+                        controller: _emailController,
+                        hintText: 'Email Address',
+                        icon: Icons.email_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                        delay: 100,
+                      ),
+
+                      const SizedBox(height: 16),
 
                       // UID Field
                       _buildAnimatedTextField(
                         controller: _uidController,
-                        hintText: 'Enter your UID',
+                        hintText: 'UID',
                         icon: Icons.badge_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'UID is required';
-                          }
-                          if (value.length < 5) {
-                            return 'Invalid UID format';
                           }
                           return null;
                         },
                         delay: 200,
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
                       // Registration ID Field
                       _buildAnimatedTextField(
                         controller: _regIdController,
-                        hintText: 'Enter your Registration ID',
+                        hintText: 'Registration ID',
                         icon: Icons.assignment_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Registration ID is required';
                           }
-                          if (value.length < 5) {
-                            return 'Invalid Registration ID format';
+                          return null;
+                        },
+                        delay: 300,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Department Field
+                      _buildAnimatedTextField(
+                        controller: _departmentController,
+                        hintText: 'Department',
+                        icon: Icons.business_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Department is required';
                           }
                           return null;
                         },
                         delay: 400,
                       ),
 
-                      SizedBox(height: size.height * 0.05),
+                      const SizedBox(height: 16),
 
-                      // Login Button
-                      Consumer<AuthProvider>(
-                        builder: (context, authProvider, _) {
-                          return _buildAnimatedButton(
-                            label: 'Verify & Login',
-                            onPressed: _handleLogin,
-                            isLoading: authProvider.isLoading,
-                            delay: 600,
-                          );
+                      // Semester Field
+                      _buildAnimatedTextField(
+                        controller: _semesterController,
+                        hintText: 'Semester',
+                        icon: Icons.school_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Semester is required';
+                          }
+                          return null;
                         },
+                        delay: 500,
                       ),
 
-                      SizedBox(height: size.height * 0.03),
+                      const SizedBox(height: 16),
 
-                      // Sign Up Button
-                      _buildAnimatedButton(
-                        label: 'Create New Account',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SignupScreen(
-                                selectedRole: widget.selectedRole,
-                              ),
-                            ),
-                          );
+                      // Password Field
+                      _buildAnimatedTextField(
+                        controller: _passwordController,
+                        hintText: 'Password',
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                        showPassword: _showPassword,
+                        onShowPasswordChanged: (value) {
+                          setState(() => _showPassword = value);
                         },
-                        isLoading: false,
-                        isPrimary: false,
-                        delay: 800,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                        delay: 600,
                       ),
 
-                      SizedBox(height: size.height * 0.03),
+                      const SizedBox(height: 16),
 
-                      // Info Section
+                      // Confirm Password Field
+                      _buildAnimatedTextField(
+                        controller: _confirmPasswordController,
+                        hintText: 'Confirm Password',
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                        showPassword: _showConfirmPassword,
+                        onShowPasswordChanged: (value) {
+                          setState(() => _showConfirmPassword = value);
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm password';
+                          }
+                          return null;
+                        },
+                        delay: 700,
+                      ),
+
+                      SizedBox(height: size.height * 0.02),
+
+                      // Terms & Conditions
                       TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0, end: 1),
-                        duration: const Duration(milliseconds: 1400),
+                        duration: const Duration(milliseconds: 1200),
                         curve: Curves.easeOut,
                         builder: (context, value, child) {
                           return Transform.translate(
@@ -314,17 +426,34 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           child: Row(
                             children: [
-                              const Icon(
-                                Icons.info_outline,
-                                color: AppColors.primaryColor,
-                                size: 20,
+                              Checkbox(
+                                value: _agreeToTerms,
+                                onChanged: (value) {
+                                  setState(() => _agreeToTerms = value ?? false);
+                                },
+                                activeColor: AppColors.primaryColor,
+                                checkColor: Colors.white,
+                                side: const BorderSide(
+                                  color: AppColors.primaryColor,
+                                ),
                               ),
-                              const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  'Use your college UID and Registration ID to login securely.',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.primaryColor,
+                                child: Text.rich(
+                                  TextSpan(
+                                    text: 'I agree to ',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 13,
+                                    ),
+                                    children: const [
+                                      TextSpan(
+                                        text: 'Terms & Conditions',
+                                        style: TextStyle(
+                                          color: AppColors.primaryColor,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -333,7 +462,63 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                       ),
 
-                      SizedBox(height: size.height * 0.05),
+                      SizedBox(height: size.height * 0.03),
+
+                      // Sign Up Button
+                      Consumer<AuthProvider>(
+                        builder: (context, authProvider, _) {
+                          return _buildAnimatedButton(
+                            label: 'Create Account',
+                            onPressed: _handleSignup,
+                            isLoading: authProvider.isLoading,
+                            delay: 800,
+                          );
+                        },
+                      ),
+
+                      SizedBox(height: size.height * 0.02),
+
+                      // Login Link
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1),
+                        duration: const Duration(milliseconds: 1600),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 50 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: size.height * 0.03),
                     ],
                   ),
                 ),
@@ -458,7 +643,6 @@ class _LoginScreenState extends State<LoginScreen>
     required String label,
     required VoidCallback onPressed,
     required bool isLoading,
-    bool isPrimary = true,
     int delay = 0,
   }) {
     return TweenAnimationBuilder<double>(
@@ -479,40 +663,19 @@ class _LoginScreenState extends State<LoginScreen>
         height: 56,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: isPrimary
-              ? LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.primaryColor.withOpacity(0.8),
-                  ],
-                )
-              : const LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.white,
-                  ],
-                ),
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: AppColors.primaryColor,
-                  width: 2,
-                ),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryColor.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryColor,
+              AppColors.primaryColor.withOpacity(0.8),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryColor.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -521,24 +684,22 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(15),
             child: Center(
               child: isLoading
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isPrimary ? Colors.white : AppColors.primaryColor,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
                         ),
                       ),
                     )
                   : Text(
                       label,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isPrimary
-                            ? Colors.white
-                            : AppColors.primaryColor,
+                        color: Colors.white,
                         letterSpacing: 1,
                       ),
                     ),

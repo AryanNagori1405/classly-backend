@@ -1,145 +1,116 @@
-import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ApiService {
-  late Dio _dio;
-  final String baseUrl = dotenv.env['API_BASE_URL'] ?? 'http://localhost:5000';
+  static const String baseUrl = 'http://localhost:5000/api'; // Change to your backend URL
 
-  ApiService() {
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-    ));
-
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (error, handler) {
-        if (error.response?.statusCode == 401) {
-          // Token expired - redirect to login
-        }
-        return handler.next(error);
-      },
-    ));
-  }
-
-  // Auth
-  Future<Map<String, dynamic>> register({
-    required String name,
-    required String email,
-    required String password,
-    required String role,
-  }) async {
-    try {
-      final response = await _dio.post('/api/auth/register', data: {
-        'name': name,
-        'email': email,
-        'password': password,
-        'role': role,
-      });
-      return response.data;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
+  /// Login with email and password
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     try {
-      final response = await _dio.post('/api/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
-      
-      // Save token
-      final token = response.data['token'];
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', token);
-      
-      return response.data;
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw 'Login failed: ${response.body}';
+      }
     } catch (e) {
-      rethrow;
+      throw 'Network error: $e';
     }
   }
 
-  // Courses
-  Future<List<Map<String, dynamic>>> getCourses() async {
-    try {
-      final response = await _dio.get('/api/courses');
-      return List<Map<String, dynamic>>.from(response.data['courses']);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>> getCourseById(int courseId) async {
-    try {
-      final response = await _dio.get('/api/courses/$courseId');
-      return response.data;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Videos
-  Future<List<Map<String, dynamic>>> getVideos({
-    String? search,
-    String? sortBy,
+  /// Login with UID and Registration ID
+  Future<Map<String, dynamic>> loginWithUID({
+    required String uid,
+    required String regId,
+    required String role,
   }) async {
     try {
-      final response = await _dio.get('/api/videos', queryParameters: {
-        if (search != null) 'search': search,
-        if (sortBy != null) 'sortBy': sortBy,
-      });
-      return List<Map<String, dynamic>>.from(response.data['videos']);
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login-uid'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'uid': uid,
+          'regId': regId,
+          'role': role,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw 'UID verification failed: ${response.body}';
+      }
     } catch (e) {
-      rethrow;
+      throw 'Network error: $e';
     }
   }
 
-  Future<Map<String, dynamic>> getVideoById(int videoId) async {
+  /// Register with email and password
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+    required String uid,
+    required String regId,
+    required String department,
+    required String semester,
+  }) async {
     try {
-      final response = await _dio.get('/api/videos/$videoId');
-      return response.data;
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'role': role,
+          'uid': uid,
+          'regId': regId,
+          'department': department,
+          'semester': semester,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        throw 'Registration failed: ${response.body}';
+      }
     } catch (e) {
-      rethrow;
+      throw 'Network error: $e';
     }
   }
 
-  Future<void> upvoteVideo(int videoId) async {
+  /// Logout
+  Future<void> logout({required String token}) async {
     try {
-      await _dio.post('/api/videos/$videoId/upvote');
+      await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
     } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Analytics
-  Future<Map<String, dynamic>> getTeacherAnalytics() async {
-    try {
-      final response = await _dio.get('/api/analytics/teacher');
-      return response.data;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>> getStudentAnalytics() async {
-    try {
-      final response = await _dio.get('/api/analytics/student');
-      return response.data;
-    } catch (e) {
-      rethrow;
+      throw 'Logout failed: $e';
     }
   }
 }

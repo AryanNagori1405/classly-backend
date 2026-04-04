@@ -5,25 +5,20 @@ import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
-import 'signup_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  final String selectedRole;
-
-  const LoginScreen({
-    Key? key,
-    required this.selectedRole,
-  }) : super(key: key);
+class UIDLoginScreen extends StatefulWidget {
+  const UIDLoginScreen({Key? key}) : super(key: key);
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<UIDLoginScreen> createState() => _UIDLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _UIDLoginScreenState extends State<UIDLoginScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _uidController = TextEditingController();
   final _regIdController = TextEditingController();
+  String _selectedRole = 'student';
 
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -80,11 +75,11 @@ class _LoginScreenState extends State<LoginScreen>
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
-
+      
       final success = await authProvider.loginWithUID(
         uid: _uidController.text.trim(),
         regId: _regIdController.text.trim(),
-        role: widget.selectedRole,
+        role: _selectedRole,
       );
 
       if (mounted) {
@@ -92,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen>
           // Navigate based on role
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (context) => widget.selectedRole == 'student'
+              builder: (context) => _selectedRole == 'student'
                   ? const StudentHomeScreen()
                   : const TeacherHomeScreen(),
             ),
@@ -183,38 +178,18 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         'Classroom Lecture Sharing',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 14,
                           color: Colors.grey.shade600,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
 
-                      SizedBox(height: size.height * 0.03),
+                      SizedBox(height: size.height * 0.05),
 
-                      // Role Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: AppColors.primaryColor.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Text(
-                          'Signing in as ${widget.selectedRole.toUpperCase()}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                      // Role Selection Toggle
+                      _buildRoleToggle(),
 
-                      SizedBox(height: size.height * 0.08),
+                      SizedBox(height: size.height * 0.06),
 
                       // UID Field
                       _buildAnimatedTextField(
@@ -264,26 +239,6 @@ class _LoginScreenState extends State<LoginScreen>
                             delay: 600,
                           );
                         },
-                      ),
-
-                      SizedBox(height: size.height * 0.03),
-
-                      // Sign Up Button
-                      _buildAnimatedButton(
-                        label: 'Create New Account',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SignupScreen(
-                                selectedRole: widget.selectedRole,
-                              ),
-                            ),
-                          );
-                        },
-                        isLoading: false,
-                        isPrimary: false,
-                        delay: 800,
                       ),
 
                       SizedBox(height: size.height * 0.03),
@@ -345,13 +300,116 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Widget _buildRoleToggle() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 1200),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1.2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedRole = 'student'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedRole == 'student'
+                        ? AppColors.primaryColor
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person,
+                        color: _selectedRole == 'student'
+                            ? Colors.white
+                            : Colors.grey.shade600,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Student',
+                        style: TextStyle(
+                          color: _selectedRole == 'student'
+                              ? Colors.white
+                              : Colors.grey.shade600,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedRole = 'teacher'),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedRole == 'teacher'
+                        ? AppColors.primaryColor
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.school,
+                        color: _selectedRole == 'teacher'
+                            ? Colors.white
+                            : Colors.grey.shade600,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Teacher',
+                        style: TextStyle(
+                          color: _selectedRole == 'teacher'
+                              ? Colors.white
+                              : Colors.grey.shade600,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAnimatedTextField({
     required TextEditingController controller,
     required String hintText,
     required IconData icon,
-    bool isPassword = false,
-    bool showPassword = false,
-    Function(bool)? onShowPasswordChanged,
     String? Function(String?)? validator,
     int delay = 0,
   }) {
@@ -381,7 +439,6 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         child: TextFormField(
           controller: controller,
-          obscureText: isPassword && !showPassword,
           validator: validator,
           style: const TextStyle(
             color: Colors.black87,
@@ -397,19 +454,6 @@ class _LoginScreenState extends State<LoginScreen>
               icon,
               color: AppColors.primaryColor.withOpacity(0.6),
             ),
-            suffixIcon: isPassword
-                ? GestureDetector(
-                    onTap: () {
-                      onShowPasswordChanged?.call(!showPassword);
-                    },
-                    child: Icon(
-                      showPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                      color: AppColors.primaryColor.withOpacity(0.6),
-                    ),
-                  )
-                : null,
             filled: true,
             fillColor: Colors.grey.shade50,
             border: OutlineInputBorder(
@@ -458,7 +502,6 @@ class _LoginScreenState extends State<LoginScreen>
     required String label,
     required VoidCallback onPressed,
     required bool isLoading,
-    bool isPrimary = true,
     int delay = 0,
   }) {
     return TweenAnimationBuilder<double>(
@@ -479,40 +522,19 @@ class _LoginScreenState extends State<LoginScreen>
         height: 56,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: isPrimary
-              ? LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.primaryColor.withOpacity(0.8),
-                  ],
-                )
-              : const LinearGradient(
-                  colors: [
-                    Colors.white,
-                    Colors.white,
-                  ],
-                ),
-          border: isPrimary
-              ? null
-              : Border.all(
-                  color: AppColors.primaryColor,
-                  width: 2,
-                ),
-          boxShadow: isPrimary
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryColor.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primaryColor,
+              AppColors.primaryColor.withOpacity(0.8),
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primaryColor.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Material(
           color: Colors.transparent,
@@ -521,24 +543,22 @@ class _LoginScreenState extends State<LoginScreen>
             borderRadius: BorderRadius.circular(15),
             child: Center(
               child: isLoading
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          isPrimary ? Colors.white : AppColors.primaryColor,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
                         ),
                       ),
                     )
                   : Text(
                       label,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: isPrimary
-                            ? Colors.white
-                            : AppColors.primaryColor,
+                        color: Colors.white,
                         letterSpacing: 1,
                       ),
                     ),

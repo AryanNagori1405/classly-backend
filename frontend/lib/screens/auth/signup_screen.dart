@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
-import '../home/home_screen.dart';
-import 'login_screen.dart';
+import '../home/student_home.dart';
+import '../home/teacher_home.dart';
 
 class SignupScreen extends StatefulWidget {
   final String selectedRole;
@@ -22,8 +23,13 @@ class _SignupScreenState extends State<SignupScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _uidController = TextEditingController();
+  final _regIdController = TextEditingController();
+  final _departmentController = TextEditingController();
+  final _semesterController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  
   bool _showPassword = false;
   bool _showConfirmPassword = false;
   bool _agreeToTerms = false;
@@ -77,18 +83,22 @@ class _SignupScreenState extends State<SignupScreen>
     _scaleController.dispose();
     _nameController.dispose();
     _emailController.dispose();
+    _uidController.dispose();
+    _regIdController.dispose();
+    _departmentController.dispose();
+    _semesterController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleSignup() {
+  void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       if (!_agreeToTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please agree to terms and conditions'),
-            backgroundColor: AppColors.warningColor,
+            backgroundColor: AppColors.errorColor,
           ),
         );
         return;
@@ -104,23 +114,38 @@ class _SignupScreenState extends State<SignupScreen>
         return;
       }
 
-      context.read<AuthProvider>().signup(
-            name: _nameController.text,
-            email: _emailController.text,
-            password: _passwordController.text,
-            role: widget.selectedRole,
+      final authProvider = context.read<AuthProvider>();
+
+      final success = await authProvider.signup(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        role: widget.selectedRole,
+        uid: _uidController.text.trim(),
+        regId: _regIdController.text.trim(),
+        department: _departmentController.text.trim(),
+        semester: _semesterController.text.trim(),
+      );
+
+      if (mounted) {
+        if (success) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (context) => widget.selectedRole == 'student'
+                  ? const StudentHomeScreen()
+                  : const TeacherHomeScreen(),
+            ),
+            (route) => false,
           );
-
-      Future.delayed(const Duration(seconds: 2), () {
-        if (!mounted) return;
-
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.error ?? 'Signup failed'),
+              backgroundColor: AppColors.errorColor,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -240,10 +265,10 @@ class _SignupScreenState extends State<SignupScreen>
                           }
                           return null;
                         },
-                        delay: 100,
+                        delay: 0,
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
                       // Email Field
                       _buildAnimatedTextField(
@@ -259,10 +284,74 @@ class _SignupScreenState extends State<SignupScreen>
                           }
                           return null;
                         },
+                        delay: 100,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // UID Field
+                      _buildAnimatedTextField(
+                        controller: _uidController,
+                        hintText: 'UID',
+                        icon: Icons.badge_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'UID is required';
+                          }
+                          return null;
+                        },
                         delay: 200,
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+
+                      // Registration ID Field
+                      _buildAnimatedTextField(
+                        controller: _regIdController,
+                        hintText: 'Registration ID',
+                        icon: Icons.assignment_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Registration ID is required';
+                          }
+                          return null;
+                        },
+                        delay: 300,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Department Field
+                      _buildAnimatedTextField(
+                        controller: _departmentController,
+                        hintText: 'Department',
+                        icon: Icons.business_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Department is required';
+                          }
+                          return null;
+                        },
+                        delay: 400,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Semester Field
+                      _buildAnimatedTextField(
+                        controller: _semesterController,
+                        hintText: 'Semester',
+                        icon: Icons.school_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Semester is required';
+                          }
+                          return null;
+                        },
+                        delay: 500,
+                      ),
+
+                      const SizedBox(height: 12),
 
                       // Password Field
                       _buildAnimatedTextField(
@@ -283,10 +372,10 @@ class _SignupScreenState extends State<SignupScreen>
                           }
                           return null;
                         },
-                        delay: 300,
+                        delay: 600,
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
                       // Confirm Password Field
                       _buildAnimatedTextField(
@@ -304,7 +393,7 @@ class _SignupScreenState extends State<SignupScreen>
                           }
                           return null;
                         },
-                        delay: 400,
+                        delay: 700,
                       ),
 
                       SizedBox(height: size.height * 0.02),
@@ -324,12 +413,13 @@ class _SignupScreenState extends State<SignupScreen>
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(AppConstants.paddingMedium),
                           decoration: BoxDecoration(
                             color: AppColors.primaryColor.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: AppColors.primaryColor.withOpacity(0.2),
+                              width: 1,
                             ),
                           ),
                           child: Row(
@@ -337,9 +427,7 @@ class _SignupScreenState extends State<SignupScreen>
                               Checkbox(
                                 value: _agreeToTerms,
                                 onChanged: (value) {
-                                  setState(
-                                    () => _agreeToTerms = value ?? false,
-                                  );
+                                  setState(() => _agreeToTerms = value ?? false);
                                 },
                                 activeColor: AppColors.primaryColor,
                                 checkColor: Colors.white,
@@ -376,12 +464,12 @@ class _SignupScreenState extends State<SignupScreen>
 
                       // Sign Up Button
                       Consumer<AuthProvider>(
-                        builder: (context, authProvider, child) {
+                        builder: (context, authProvider, _) {
                           return _buildAnimatedButton(
                             label: 'Create Account',
                             onPressed: _handleSignup,
                             isLoading: authProvider.isLoading,
-                            delay: 500,
+                            delay: 800,
                           );
                         },
                       ),
@@ -389,21 +477,43 @@ class _SignupScreenState extends State<SignupScreen>
                       SizedBox(height: size.height * 0.02),
 
                       // Login Link
-                      _buildAnimatedButton(
-                        label: 'Already have an account? Login',
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => LoginScreen(
-                                selectedRole: widget.selectedRole,
-                              ),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0, end: 1),
+                        duration: const Duration(milliseconds: 1600),
+                        curve: Curves.easeOut,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 50 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
                             ),
                           );
                         },
-                        isLoading: false,
-                        isPrimary: false,
-                        delay: 600,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Already have an account? ',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: AppColors.primaryColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       SizedBox(height: size.height * 0.03),
@@ -607,14 +717,13 @@ class _SignupScreenState extends State<SignupScreen>
                   : Text(
                       label,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: isPrimary
                             ? Colors.white
                             : AppColors.primaryColor,
-                        letterSpacing: 0.5,
+                        letterSpacing: 1,
                       ),
-                      textAlign: TextAlign.center,
                     ),
             ),
           ),
