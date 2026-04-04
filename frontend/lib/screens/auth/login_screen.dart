@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
-import '../../config/constants.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
-import '../../widgets/animations/fade_animation.dart';
-import '../../widgets/animations/slide_animation.dart';
+import '../../providers/auth_provider.dart';
+import '../home/home_screen.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,22 +17,60 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _emailController;
-  late TextEditingController _passwordController;
-  bool _isLoading = false;
-  final bool _showPassword = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _showPassword = false;
+
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late AnimationController _scaleController;
+
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController();
-    _passwordController = TextEditingController();
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    );
+
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOut),
+    );
+
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
+
+    _fadeController.forward();
+    _slideController.forward();
+    _scaleController.forward();
   }
 
   @override
   void dispose() {
+    _fadeController.dispose();
+    _slideController.dispose();
+    _scaleController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -42,190 +78,435 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+      context.read<AuthProvider>().login(
+            email: _emailController.text,
+            password: _passwordController.text,
+          );
 
       Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✓ Login successful!'),
-              backgroundColor: AppColors.successColor,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+        if (!mounted) return;
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+          (route) => false,
+        );
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: AppColors.backgroundColor,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppConstants.paddingLarge,
-            vertical: AppConstants.paddingMedium,
-          ),
-          child: FadeAnimation(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                // Header
-                SlideAnimation(
-                  direction: SlideDirection.fromTop,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome Back',
-                        style: AppTextStyles.headingLarge.copyWith(
-                          fontSize: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      RichText(
-                        text: TextSpan(
-                          text: 'Sign in as ',
-                          style: AppTextStyles.bodyMedium,
-                          children: [
-                            TextSpan(
-                              text: widget.selectedRole.toUpperCase(),
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.primaryColor,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 50),
-                // Form
-                Form(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: SlideTransition(
+              position: _slideAnimation,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Form(
                   key: _formKey,
                   child: Column(
                     children: [
+                      SizedBox(height: size.height * 0.05),
+
+                      // Logo Animation
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primaryColor.withOpacity(0.1),
+                            border: Border.all(
+                              color: AppColors.primaryColor.withOpacity(0.3),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryColor.withOpacity(0.15),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.school,
+                            size: 60,
+                            color: AppColors.primaryColor,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: size.height * 0.04),
+
+                      // Title
+                      const Text(
+                        'Classly',
+                        style: TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryColor,
+                          letterSpacing: 2,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Subtitle
+                      Text(
+                        'Learn Better, Grow Together',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey.shade600,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+
+                      SizedBox(height: size.height * 0.03),
+
+                      // Role Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.primaryColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          'Signing in as ${widget.selectedRole.toUpperCase()}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
+                      SizedBox(height: size.height * 0.08),
+
                       // Email Field
-                      SlideAnimation(
-                        direction: SlideDirection.fromLeft,
-                        child: CustomTextField(
-                          label: 'Email Address',
-                          hint: 'name@example.com',
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.mail_outline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Email is required';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
+                      _buildAnimatedTextField(
+                        controller: _emailController,
+                        hintText: 'Email Address',
+                        icon: Icons.email_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                        delay: 200,
                       ),
-                      const SizedBox(height: 24),
+
+                      const SizedBox(height: 20),
+
                       // Password Field
-                      SlideAnimation(
-                        direction: SlideDirection.fromRight,
-                        child: CustomTextField(
-                          label: 'Password',
-                          hint: 'Enter your password',
-                          controller: _passwordController,
-                          obscureText: !_showPassword,
-                          prefixIcon: Icons.lock_outline,
-                          suffixIcon:
-                              _showPassword ? Icons.visibility : Icons.visibility_off,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Password is required';
-                            }
-                            if (value.length < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                          onChanged: (value) {
-                            setState(() {});
-                          },
-                        ),
+                      _buildAnimatedTextField(
+                        controller: _passwordController,
+                        hintText: 'Password',
+                        icon: Icons.lock_outline,
+                        isPassword: true,
+                        showPassword: _showPassword,
+                        onShowPasswordChanged: (value) {
+                          setState(() => _showPassword = value);
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
+                        delay: 400,
                       ),
-                      const SizedBox(height: 16),
+
+                      SizedBox(height: size.height * 0.03),
+
                       // Forgot Password
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
-                          child: Text(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Password reset feature coming soon!',
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text(
                             'Forgot Password?',
-                            style: AppTextStyles.bodySmall.copyWith(
+                            style: TextStyle(
                               color: AppColors.primaryColor,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 32),
+
+                      SizedBox(height: size.height * 0.04),
+
                       // Login Button
-                      SlideAnimation(
-                        direction: SlideDirection.fromBottom,
-                        child: CustomButton(
-                          label: 'Sign In',
-                          onPressed: _handleLogin,
-                          isLoading: _isLoading,
-                        ),
+                      Consumer<AuthProvider>(
+                        builder: (context, authProvider, child) {
+                          return _buildAnimatedButton(
+                            label: 'Login',
+                            onPressed: _handleLogin,
+                            isLoading: authProvider.isLoading,
+                            delay: 600,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 24),
-                      // Sign Up Link
-                      SlideAnimation(
-                        direction: SlideDirection.fromBottom,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Don\'t have an account? ',
-                              style: AppTextStyles.bodySmall,
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) => SignupScreen(
-                                      selectedRole: widget.selectedRole,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                'Sign Up',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.primaryColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
+
+                      SizedBox(height: size.height * 0.03),
+
+                      // Sign Up Button
+                      _buildAnimatedButton(
+                        label: 'Create New Account',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SignupScreen(
+                                selectedRole: widget.selectedRole,
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
+                        isLoading: false,
+                        isPrimary: false,
+                        delay: 800,
                       ),
+
+                      SizedBox(height: size.height * 0.05),
                     ],
                   ),
                 ),
-              ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool isPassword = false,
+    bool showPassword = false,
+    Function(bool)? onShowPasswordChanged,
+    String? Function(String?)? validator,
+    int delay = 0,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 800 + delay),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: TextFormField(
+          controller: controller,
+          obscureText: isPassword && !showPassword,
+          validator: validator,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontSize: 16,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: AppColors.primaryColor.withOpacity(0.6),
+            ),
+            suffixIcon: isPassword
+                ? GestureDetector(
+                    onTap: () {
+                      onShowPasswordChanged?.call(!showPassword);
+                    },
+                    child: Icon(
+                      showPassword
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: AppColors.primaryColor.withOpacity(0.6),
+                    ),
+                  )
+                : null,
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: Colors.grey.shade200,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: Colors.grey.shade200,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(
+                color: AppColors.primaryColor,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(
+                color: AppColors.errorColor,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(
+                color: AppColors.errorColor,
+                width: 2,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedButton({
+    required String label,
+    required VoidCallback onPressed,
+    required bool isLoading,
+    bool isPrimary = true,
+    int delay = 0,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: 800 + delay),
+      curve: Curves.easeOut,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 50 * (1 - value)),
+          child: Opacity(
+            opacity: value,
+            child: child,
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          gradient: isPrimary
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primaryColor,
+                    AppColors.primaryColor.withOpacity(0.8),
+                  ],
+                )
+              : const LinearGradient(
+                  colors: [
+                    Colors.white,
+                    Colors.white,
+                  ],
+                ),
+          border: isPrimary
+              ? null
+              : Border.all(
+                  color: AppColors.primaryColor,
+                  width: 2,
+                ),
+          boxShadow: isPrimary
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryColor.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: isLoading ? null : onPressed,
+            borderRadius: BorderRadius.circular(15),
+            child: Center(
+              child: isLoading
+                  ? SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isPrimary ? Colors.white : AppColors.primaryColor,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isPrimary
+                            ? Colors.white
+                            : AppColors.primaryColor,
+                        letterSpacing: 1,
+                      ),
+                    ),
             ),
           ),
         ),

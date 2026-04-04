@@ -126,14 +126,15 @@ class _CoursesScreenState extends State<CoursesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundColor,
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
           'Courses',
           style: AppTextStyles.headingMedium.copyWith(
             fontSize: 24,
+            color: Colors.black87,
           ),
         ),
         actions: [
@@ -143,10 +144,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.surfaceColor,
+                color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.borderColor,
+                  color: Colors.grey.shade200,
                   width: 1.2,
                 ),
               ),
@@ -172,13 +173,13 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: AppColors.borderColor,
+                    color: Colors.grey.shade200,
                     width: 1.2,
                   ),
-                  color: AppColors.surfaceColor,
-                  boxShadow: const [
+                  color: Colors.white,
+                  boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadowColor,
+                      color: Colors.grey.withOpacity(0.1),
                       blurRadius: 8,
                     ),
                   ],
@@ -186,20 +187,24 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (value) => setState(() {}),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Search courses...',
-                    hintStyle: AppTextStyles.bodyMedium,
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.grey.shade400,
+                    ),
                     prefixIcon: Icon(
                       Icons.search_outlined,
-                      color: AppColors.textLight,
+                      color: Colors.grey.shade400,
                     ),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
                     ),
                   ),
-                  style: AppTextStyles.bodyMedium,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ),
@@ -261,11 +266,11 @@ class _CoursesScreenState extends State<CoursesScreen> {
           vertical: 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryColor : AppColors.surfaceColor,
+          color: isSelected ? AppColors.primaryColor : Colors.white,
           border: Border.all(
             color: isSelected
                 ? AppColors.primaryColor
-                : AppColors.borderColor,
+                : Colors.grey.shade200,
             width: 1.2,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -282,9 +287,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         child: Text(
           label,
           style: AppTextStyles.bodySmall.copyWith(
-            color: isSelected
-                ? AppColors.surfaceColor
-                : AppColors.textDark,
+            color: isSelected ? Colors.white : Colors.black87,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -298,13 +301,13 @@ class _CoursesScreenState extends State<CoursesScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         border: Border.all(
-          color: AppColors.borderColor,
+          color: Colors.grey.shade200,
           width: 1.2,
         ),
-        color: AppColors.surfaceColor,
-        boxShadow: const [
+        color: Colors.white,
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowColor,
+            color: Colors.grey.withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -338,24 +341,24 @@ class _CoursesScreenState extends State<CoursesScreen> {
                       child: Container(
                         width: 80,
                         height: 80,
-                        color: AppColors.backgroundColor,
+                        color: Colors.grey.shade100,
                         child: course.thumbnail != null
                             ? Image.network(
                                 course.thumbnail!,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
+                                  return Center(
                                     child: Icon(
                                       Icons.book_outlined,
-                                      color: AppColors.textLight,
+                                      color: Colors.grey.shade400,
                                     ),
                                   );
                                 },
                               )
-                            : const Center(
+                            : Center(
                                 child: Icon(
                                   Icons.book_outlined,
-                                  color: AppColors.textLight,
+                                  color: Colors.grey.shade400,
                                 ),
                               ),
                       ),
@@ -372,13 +375,14 @@ class _CoursesScreenState extends State<CoursesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTextStyles.bodyLarge.copyWith(
                               fontWeight: FontWeight.w700,
+                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'by ${course.instructor}',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textLight,
+                              color: Colors.grey.shade500,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -387,28 +391,31 @@ class _CoursesScreenState extends State<CoursesScreen> {
                               const Icon(
                                 Icons.star_rounded,
                                 size: 16,
-                                color: AppColors.warningColor,
+                                color: Colors.amber,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 course.rating.toStringAsFixed(1),
                                 style: AppTextStyles.caption.copyWith(
                                   fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Container(
                                 width: 4,
                                 height: 4,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.borderColor,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 '${course.videosCount} videos',
-                                style: AppTextStyles.caption,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: Colors.grey.shade500,
+                                ),
                               ),
                             ],
                           ),
@@ -422,17 +429,17 @@ class _CoursesScreenState extends State<CoursesScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.successColor.withOpacity(0.1),
+                          color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: AppColors.successColor.withOpacity(0.3),
+                            color: Colors.green.withOpacity(0.3),
                             width: 1,
                           ),
                         ),
                         child: Text(
                           'Enrolled',
                           style: AppTextStyles.caption.copyWith(
-                            color: AppColors.successColor,
+                            color: Colors.green,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -501,14 +508,14 @@ class _CoursesScreenState extends State<CoursesScreen> {
           Text(
             'No Courses Found',
             style: AppTextStyles.headingSmall.copyWith(
-              color: AppColors.textDark,
+              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try different filters or search',
             style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textLight,
+              color: Colors.grey.shade500,
             ),
           ),
         ],

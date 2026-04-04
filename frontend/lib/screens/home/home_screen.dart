@@ -27,20 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundColor,
+      backgroundColor: Colors.white,
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceColor,
+        decoration: BoxDecoration(
+          color: Colors.white,
           border: Border(
             top: BorderSide(
-              color: AppColors.borderColor,
+              color: Colors.grey.shade200,
               width: 1.0,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadowColor,
+              color: Colors.grey.withOpacity(0.1),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: AppColors.primaryColor,
-          unselectedItemColor: AppColors.textLight,
+          unselectedItemColor: Colors.grey.shade400,
           selectedLabelStyle: AppTextStyles.caption.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -99,10 +99,10 @@ class DashboardTab extends StatelessWidget {
                   builder: (context, authProvider, _) {
                     return Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [
                             AppColors.primaryColor,
-                            AppColors.secondaryColor,
+                            AppColors.primaryColor.withOpacity(0.8),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -112,7 +112,7 @@ class DashboardTab extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primaryColor.withOpacity(0.3),
+                            color: AppColors.primaryColor.withOpacity(0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -132,7 +132,7 @@ class DashboardTab extends StatelessWidget {
                                     Text(
                                       'Welcome Back! 👋',
                                       style: AppTextStyles.headingMedium.copyWith(
-                                        color: AppColors.surfaceColor,
+                                        color: Colors.white,
                                         fontSize: 26,
                                       ),
                                     ),
@@ -140,8 +140,7 @@ class DashboardTab extends StatelessWidget {
                                     Text(
                                       authProvider.user?.name ?? 'Student',
                                       style: AppTextStyles.bodyLarge.copyWith(
-                                        color: AppColors.surfaceColor
-                                            .withOpacity(0.9),
+                                        color: Colors.white.withOpacity(0.9),
                                         fontSize: 16,
                                       ),
                                     ),
@@ -152,17 +151,16 @@ class DashboardTab extends StatelessWidget {
                                 width: 60,
                                 height: 60,
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceColor.withOpacity(0.2),
+                                  color: Colors.white.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: AppColors.surfaceColor
-                                        .withOpacity(0.3),
+                                    color: Colors.white.withOpacity(0.3),
                                     width: 1.5,
                                   ),
                                 ),
                                 child: const Icon(
                                   Icons.person_outline,
-                                  color: AppColors.surfaceColor,
+                                  color: Colors.white,
                                   size: 28,
                                 ),
                               ),
@@ -175,18 +173,17 @@ class DashboardTab extends StatelessWidget {
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceColor.withOpacity(0.2),
+                              color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: AppColors.surfaceColor
-                                    .withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
                             child: Text(
                               authProvider.user?.role.toUpperCase() ?? 'STUDENT',
                               style: AppTextStyles.caption.copyWith(
-                                color: AppColors.surfaceColor,
+                                color: Colors.white,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -211,13 +208,14 @@ class DashboardTab extends StatelessWidget {
                           'Quick Stats',
                           style: AppTextStyles.headingSmall.copyWith(
                             fontSize: 22,
+                            color: Colors.black87,
                           ),
                         ),
                         GestureDetector(
                           onTap: () {},
-                          child: const Icon(
+                          child: Icon(
                             Icons.more_horiz,
-                            color: AppColors.textLight,
+                            color: Colors.grey.shade400,
                           ),
                         ),
                       ],
@@ -241,19 +239,19 @@ class DashboardTab extends StatelessWidget {
                           title: 'Videos',
                           value: '24',
                           icon: Icons.play_circle_outline,
-                          color: AppColors.accentColor,
+                          color: Colors.orange,
                         ),
                         _buildStatCard(
                           title: 'Completed',
                           value: '12',
                           icon: Icons.check_circle_outline,
-                          color: AppColors.successColor,
+                          color: Colors.green,
                         ),
                         _buildStatCard(
                           title: 'Learning',
                           value: '8h 30m',
                           icon: Icons.timer_outlined,
-                          color: AppColors.secondaryColor,
+                          color: Colors.purple,
                         ),
                       ],
                     ),
@@ -271,6 +269,7 @@ class DashboardTab extends StatelessWidget {
                       'Continue Learning',
                       style: AppTextStyles.headingSmall.copyWith(
                         fontSize: 22,
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: AppConstants.paddingLarge),
@@ -314,10 +313,10 @@ class DashboardTab extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
           border: Border.all(
-            color: AppColors.borderColor,
+            color: Colors.grey.shade200,
             width: 1.2,
           ),
-          color: AppColors.surfaceColor,
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: color.withOpacity(0.08),
@@ -359,7 +358,7 @@ class DashboardTab extends StatelessWidget {
             Text(
               title,
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.textLight,
+                color: Colors.grey.shade500,
               ),
             ),
           ],
@@ -378,13 +377,13 @@ class DashboardTab extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         border: Border.all(
-          color: AppColors.borderColor,
+          color: Colors.grey.shade200,
           width: 1.2,
         ),
-        color: AppColors.surfaceColor,
-        boxShadow: const [
+        color: Colors.white,
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowColor,
+            color: Colors.grey.withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -402,7 +401,7 @@ class DashboardTab extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       AppColors.primaryColor.withOpacity(0.2),
-                      AppColors.secondaryColor.withOpacity(0.2),
+                      AppColors.primaryColor.withOpacity(0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -421,12 +420,15 @@ class DashboardTab extends StatelessWidget {
                       title,
                       style: AppTextStyles.bodyLarge.copyWith(
                         fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'by $instructor',
-                      style: AppTextStyles.bodySmall,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   ],
                 ),
@@ -434,7 +436,7 @@ class DashboardTab extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: AppColors.textLight,
+                color: Colors.grey.shade400,
               ),
             ],
           ),
@@ -447,7 +449,7 @@ class DashboardTab extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 6,
-                    backgroundColor: AppColors.borderColor,
+                    backgroundColor: Colors.grey.shade200,
                     valueColor: const AlwaysStoppedAnimation<Color>(
                       AppColors.primaryColor,
                     ),

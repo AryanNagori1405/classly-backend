@@ -18,343 +18,341 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.all(AppConstants.paddingLarge),
           child: Consumer<AuthProvider>(
             builder: (context, authProvider, _) {
-              return Column(
-                children: [
-                  // Profile Header Card
-                  FadeAnimation(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            AppColors.primaryColor,
-                            AppColors.secondaryColor,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(
-                          AppConstants.radiusXLarge,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryColor.withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
+              return Column(children: [
+                // Profile Header Card
+                FadeAnimation(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primaryColor,
+                          AppColors.primaryColor.withOpacity(0.8),
                         ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      padding: const EdgeInsets.all(AppConstants.paddingXLarge),
-                      child: Column(
-                        children: [
-                          // Avatar
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.surfaceColor,
-                              border: Border.all(
-                                color: AppColors.surfaceColor,
-                                width: 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Name
-                          Text(
-                            authProvider.user?.name ?? 'User',
-                            style: AppTextStyles.headingMedium.copyWith(
-                              color: AppColors.surfaceColor,
-                              fontSize: 26,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Email
-                          Text(
-                            authProvider.user?.email ?? 'email@example.com',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.surfaceColor
-                                  .withOpacity(0.85),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Role Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceColor.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.surfaceColor
-                                    .withOpacity(0.3),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Text(
-                              authProvider.user?.role.toUpperCase() ?? 'STUDENT',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.surfaceColor,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
-                        ],
+                      borderRadius: BorderRadius.circular(
+                        AppConstants.radiusXLarge,
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.paddingXLarge),
-
-                  // Stats Section
-                  FadeAnimation(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildProfileStat(
-                            label: 'Courses',
-                            value: '5',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildProfileStat(
-                            label: 'Learning',
-                            value: '8h',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildProfileStat(
-                            label: 'Progress',
-                            value: '65%',
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryColor.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: AppConstants.paddingXLarge),
-
-                  // Menu Items
-                  FadeAnimation(
+                    padding: const EdgeInsets.all(AppConstants.paddingXLarge),
                     child: Column(
                       children: [
-                        _buildMenuItem(
-                          icon: Icons.person_outline,
-                          title: 'Edit Profile',
-                          subtitle: 'Update your information',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Edit Profile - Coming soon'),
-                                backgroundColor: AppColors.accentColor,
+                        // Avatar
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 50,
+                            color: AppColors.primaryColor,
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _buildMenuItem(
-                          icon: Icons.settings_outlined,
-                          title: 'Settings',
-                          subtitle: 'Manage your preferences',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Settings - Coming soon'),
-                                backgroundColor: AppColors.accentColor,
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 20),
+                        // Name
+                        Text(
+                          authProvider.user?.name ?? 'User',
+                          style: AppTextStyles.headingMedium.copyWith(
+                            color: Colors.white,
+                            fontSize: 26,
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _buildMenuItem(
-                          icon: Icons.help_outline,
-                          title: 'Help & Support',
-                          subtitle: 'Get help from our team',
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Help & Support - Coming soon'),
-                                backgroundColor: AppColors.accentColor,
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 8),
+                        // Email
+                        Text(
+                          authProvider.user?.email ?? 'email@example.com',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        _buildMenuItem(
-                          icon: Icons.info_outline,
-                          title: 'About Classly',
-                          subtitle: 'Version 1.0.0',
-                          onTap: () {
-                            showAboutDialog(
-                              context: context,
-                              applicationName: 'Classly',
-                              applicationVersion: '1.0.0',
-                              applicationLegalese: AppStrings.madeWith,
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        _buildMenuItem(
-                          icon: Icons.logout_outlined,
-                          title: 'Logout',
-                          subtitle: 'Sign out from your account',
-                          isDestructive: true,
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => Dialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppConstants.radiusLarge,
-                                  ),
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(
-                                    AppConstants.paddingXLarge,
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 60,
-                                        height: 60,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.errorColor
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: const Icon(
-                                          Icons.logout_outlined,
-                                          color: AppColors.errorColor,
-                                          size: 28,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'Logout?',
-                                        style: AppTextStyles.headingSmall,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      const Text(
-                                        'Are you sure you want to logout from Classly?',
-                                        textAlign: TextAlign.center,
-                                        style: AppTextStyles.bodySmall,
-                                      ),
-                                      const SizedBox(height: 24),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
-                                              style: OutlinedButton.styleFrom(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                    AppConstants.radiusMedium,
-                                                  ),
-                                                ),
-                                                side: const BorderSide(
-                                                  color:
-                                                      AppColors.borderColor,
-                                                  width: 1.2,
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  vertical: 12,
-                                                ),
-                                              ),
-                                              child: Text(
-                                                'Cancel',
-                                                style: AppTextStyles.bodySmall
-                                                    .copyWith(
-                                                  color: AppColors.textDark,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                authProvider.logout();
-                                                Navigator.of(context)
-                                                    .pushAndRemoveUntil(
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        const SplashScreen(),
-                                                  ),
-                                                  (route) => false,
-                                                );
-                                              },
-                                              style:
-                                                  ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    AppColors.errorColor,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                    AppConstants.radiusMedium,
-                                                  ),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  vertical: 12,
-                                                ),
-                                              ),
-                                              child: Text(
-                                                'Logout',
-                                                style: AppTextStyles.bodySmall
-                                                    .copyWith(
-                                                  color:
-                                                      AppColors.surfaceColor,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                        const SizedBox(height: 16),
+                        // Role Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Text(
+                            authProvider.user?.role.toUpperCase() ?? 'STUDENT',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppConstants.paddingXLarge),
+                ),
+                const SizedBox(height: AppConstants.paddingXLarge),
 
-                  // Footer
-                  FadeAnimation(
-                    child: Text(
-                      AppStrings.madeWith,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textLight,
+                // Stats Section
+                FadeAnimation(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildProfileStat(
+                          label: 'Courses',
+                          value: '5',
+                        ),
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildProfileStat(
+                          label: 'Learning',
+                          value: '8h',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildProfileStat(
+                          label: 'Progress',
+                          value: '65%',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppConstants.paddingXLarge),
+
+                // Menu Items
+                FadeAnimation(
+                  child: Column(
+                    children: [
+                      _buildMenuItem(
+                        icon: Icons.person_outline,
+                        title: 'Edit Profile',
+                        subtitle: 'Update your information',
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Edit Profile - Coming soon'),
+                              backgroundColor: AppColors.accentColor,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        icon: Icons.settings_outlined,
+                        title: 'Settings',
+                        subtitle: 'Manage your preferences',
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Settings - Coming soon'),
+                              backgroundColor: AppColors.accentColor,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        icon: Icons.help_outline,
+                        title: 'Help & Support',
+                        subtitle: 'Get help from our team',
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Help & Support - Coming soon'),
+                              backgroundColor: AppColors.accentColor,
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        icon: Icons.info_outline,
+                        title: 'About Classly',
+                        subtitle: 'Version 1.0.0',
+                        onTap: () {
+                          showAboutDialog(
+                            context: context,
+                            applicationName: 'Classly',
+                            applicationVersion: '1.0.0',
+                            applicationLegalese: AppStrings.madeWith,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      _buildMenuItem(
+                        icon: Icons.logout_outlined,
+                        title: 'Logout',
+                        subtitle: 'Sign out from your account',
+                        isDestructive: true,
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppConstants.radiusLarge,
+                                ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.all(
+                                  AppConstants.paddingXLarge,
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.errorColor
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Icon(
+                                        Icons.logout_outlined,
+                                        color: AppColors.errorColor,
+                                        size: 28,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Logout?',
+                                      style:
+                                          AppTextStyles.headingSmall.copyWith(
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Are you sure you want to logout from Classly?',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            style: OutlinedButton.styleFrom(
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  AppConstants.radiusMedium,
+                                                ),
+                                              ),
+                                              side: const BorderSide(
+                                                color: Colors.grey,
+                                                width: 1.2,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Cancel',
+                                              style: AppTextStyles.bodySmall
+                                                  .copyWith(
+                                                color: Colors.black87,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              authProvider.logout();
+                                              Navigator.of(context)
+                                                  .pushAndRemoveUntil(
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const SplashScreen(),
+                                                ),
+                                                (route) => false,
+                                              );
+                                            },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  AppColors.errorColor,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  AppConstants.radiusMedium,
+                                                ),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Logout',
+                                              style: AppTextStyles.bodySmall
+                                                  .copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppConstants.paddingXLarge),
+
+                // Footer
+                FadeAnimation(
+                  child: Text(
+                    AppStrings.madeWith,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: Colors.grey.shade500,
                     ),
                   ),
-                ]);
+                ),
+              ]);
             },
           ),
         ),
@@ -374,13 +372,13 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppConstants.radiusLarge),
         border: Border.all(
-          color: AppColors.borderColor,
+          color: Colors.grey.shade200,
           width: 1.2,
         ),
-        color: AppColors.surfaceColor,
-        boxShadow: const [
+        color: Colors.white,
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowColor,
+            color: Colors.grey.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -398,7 +396,9 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
-            style: AppTextStyles.caption,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.grey.shade500,
+            ),
           ),
         ],
       ),
@@ -419,15 +419,15 @@ class ProfileScreen extends StatelessWidget {
           border: Border.all(
             color: isDestructive
                 ? AppColors.errorColor.withOpacity(0.2)
-                : AppColors.borderColor,
+                : Colors.grey.shade200,
             width: 1.2,
           ),
-          color: AppColors.surfaceColor,
+          color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: isDestructive
                   ? AppColors.errorColor.withOpacity(0.05)
-                  : AppColors.shadowColor,
+                  : Colors.grey.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -478,22 +478,24 @@ class ProfileScreen extends StatelessWidget {
                           style: AppTextStyles.bodyLarge.copyWith(
                             color: isDestructive
                                 ? AppColors.errorColor
-                                : AppColors.textDark,
+                                : Colors.black87,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: AppTextStyles.caption,
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.grey.shade500,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textLight,
+                    color: Colors.grey.shade400,
                   ),
                 ],
               ),
