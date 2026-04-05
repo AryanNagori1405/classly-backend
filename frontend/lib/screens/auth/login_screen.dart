@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
 import 'signup_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String selectedRole;
@@ -402,16 +403,11 @@ class _LoginScreenState extends State<LoginScreen>
                               },
                               child: GestureDetector(
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                          'Password reset - Coming soon'),
-                                      backgroundColor: AppColors.accentColor,
-                                      behavior: SnackBarBehavior.floating,
-                                      margin: const EdgeInsets.all(16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ForgotPasswordScreen(),
                                     ),
                                   );
                                 },
