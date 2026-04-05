@@ -1,3 +1,4 @@
+import 'package:classly_frontend/screens/search/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
@@ -185,7 +186,8 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
     _headerSlideAnimation = Tween<Offset>(
       begin: const Offset(0, -0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
+    ).animate(
+        CurvedAnimation(parent: _headerController, curve: Curves.easeOutCubic));
     _headerFadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _headerController, curve: Curves.easeInCubic),
     );
@@ -225,7 +227,8 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
 
                   // Expiring Videos Section
                   FadeAnimation(
-                    child: _buildSectionTitle('Expiring Soon ⏰', showIcon: true),
+                    child:
+                        _buildSectionTitle('Expiring Soon ⏰', showIcon: true),
                   ),
                   const SizedBox(height: AppConstants.paddingMedium),
                   FadeAnimation(
@@ -244,7 +247,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                       teacher: 'Prof. Smith',
                       daysRemaining: 1,
                       subject: 'Database',
-                      thumbnail: Icons.storage                               ,
+                      thumbnail: Icons.storage,
                     ),
                   ),
                   const SizedBox(height: AppConstants.paddingXLarge),
@@ -403,14 +406,23 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
               ],
             ),
           ),
-          ScaleTransition(
-            scale: AlwaysStoppedAnimation(1.0),
+          const SizedBox(width: 12),
+          // Search Button
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
             child: Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.3),
                   width: 1.5,
@@ -425,12 +437,66 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Icon(
+                    Icons.search_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Notifications Button
+          ScaleTransition(
+            scale: AlwaysStoppedAnimation(1.0),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Notifications - Coming soon'),
+                        backgroundColor: AppColors.accentColor,
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
                   child: const Icon(
                     Icons.notifications_rounded,
                     color: Colors.white,
-                    size: 26,
+                    size: 24,
                   ),
                 ),
               ),

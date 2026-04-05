@@ -1,3 +1,4 @@
+import 'package:classly_frontend/screens/search/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
@@ -400,14 +401,23 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
               ],
             ),
           ),
-          ScaleTransition(
-            scale: const AlwaysStoppedAnimation(1.0),
+          const SizedBox(width: 12),
+          // Search Button
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(),
+                ),
+              );
+            },
             child: Container(
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.3),
                   width: 1.5,
@@ -422,12 +432,66 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SearchScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: const Icon(
+                    Icons.search_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Notifications Button
+          ScaleTransition(
+            scale: const AlwaysStoppedAnimation(1.0),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Notifications - Coming soon'),
+                        backgroundColor: AppColors.accentColor,
+                        behavior: SnackBarBehavior.floating,
+                        margin: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
                   child: const Icon(
                     Icons.notifications_rounded,
                     color: Colors.white,
-                    size: 26,
+                    size: 24,
                   ),
                 ),
               ),
@@ -450,7 +514,7 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
     );
   }
 
-    Widget _buildStatCard({
+  Widget _buildStatCard({
     required String label,
     required String value,
     required IconData icon,

@@ -192,6 +192,23 @@ class _ProfileScreenState extends State<ProfileScreen>
                           child: Column(
                             children: [
                               _buildAnimatedMenuItem(
+                                icon: Icons.person_rounded,
+                                title: 'Edit Profile',
+                                subtitle: 'Update your information',
+                                color: AppColors.primaryColor,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const EditProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                delay: 0,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildAnimatedMenuItem(
                                 icon: Icons.settings_rounded,
                                 title: 'Settings',
                                 subtitle: 'Manage your preferences',
@@ -371,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                               ),
                             ],
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Icons.person_rounded,
                             size: 55,
                             color: AppColors.primaryColor,
