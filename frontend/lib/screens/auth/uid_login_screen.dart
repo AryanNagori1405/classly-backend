@@ -6,7 +6,7 @@ import '../home/student_home.dart';
 import '../home/teacher_home.dart';
 import '../home/admin_home_screen.dart';
 
-// ── Step 1: Enter UID or RegId ───────────────────────────────────────────────
+// ── Step 1: Enter UID or RegId ───
 class UIDLoginScreen extends StatefulWidget {
   const UIDLoginScreen({Key? key}) : super(key: key);
 
@@ -78,20 +78,24 @@ class _UIDLoginScreenState extends State<UIDLoginScreen> {
                       shape: BoxShape.circle,
                       color: AppColors.primaryColor.withOpacity(0.1),
                     ),
-                    child: Icon(Icons.school_rounded,
+                    child: const Icon(Icons.school_rounded,
                         size: 52, color: AppColors.primaryColor),
                   ),
                 ),
                 const SizedBox(height: 32),
-                Text('Welcome to Classly',
-                    style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[900])),
+                Center(
+                  child: Text('Welcome to Classly',
+                      style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[900])),
+                ),
                 const SizedBox(height: 8),
-                Text('Enter your University ID or Registration Number',
-                    style:
-                        TextStyle(fontSize: 14, color: Colors.grey[600])),
+                Center(
+                  child: Text('Enter your University ID or Registration Number',
+                      style:
+                          TextStyle(fontSize: 14, color: Colors.grey[600])),
+                ),
                 const SizedBox(height: 32),
 
                 // Toggle UID / RegId
