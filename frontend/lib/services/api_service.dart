@@ -1,9 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:5000/api'; // Android emulator → localhost
   // For physical devices use your machine's local IP, e.g. http://192.168.1.x:5000/api
+
+  static const Duration _timeout = Duration(seconds: 30);
 
   // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -12,48 +16,90 @@ class ApiService {
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
+  String _mapError(Object e) {
+    if (e is TimeoutException) {
+      return 'Request timed out. Please check your connection and try again.';
+    }
+    if (e is SocketException) {
+      return 'Cannot reach server. Make sure the backend is running and check your network.';
+    }
+    return e.toString();
+  }
+
   Future<Map<String, dynamic>> _post(String path, Map<String, dynamic> body,
       {String? token}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers(token: token),
-      body: jsonEncode(body),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Request failed (${response.statusCode})';
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token: token),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Request failed (${response.statusCode})';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
   }
 
   Future<Map<String, dynamic>> _get(String path, {String? token}) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers(token: token),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Request failed (${response.statusCode})';
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token: token),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Request failed (${response.statusCode})';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
   }
 
   Future<Map<String, dynamic>> _put(String path, Map<String, dynamic> body,
       {String? token}) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers(token: token),
-      body: jsonEncode(body),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Request failed (${response.statusCode})';
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token: token),
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Request failed (${response.statusCode})';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
   }
 
   Future<Map<String, dynamic>> _delete(String path, {String? token}) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl$path'),
-      headers: _headers(token: token),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Request failed (${response.statusCode})';
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseUrl$path'),
+            headers: _headers(token: token),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Request failed (${response.statusCode})';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
   }
 
   // ── AUTH ─────────────────────────────────────────────────────────────────────
@@ -158,14 +204,22 @@ class ApiService {
     required int videoId,
     required Map<String, dynamic> data,
   }) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/videos/$videoId'),
-      headers: _headers(token: token),
-      body: jsonEncode(data),
-    );
-    final result = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return result;
-    throw result['message'] ?? 'Update failed';
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl/videos/$videoId'),
+            headers: _headers(token: token),
+            body: jsonEncode(data),
+          )
+          .timeout(_timeout);
+      final result = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return result;
+      throw result['message'] ?? 'Update failed';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
   }
 
   Future<Map<String, dynamic>> downloadVideo({
@@ -207,13 +261,22 @@ class ApiService {
     required String token,
     required int timestampId,
   }) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/timestamps/$timestampId/resolve'),
-      headers: _headers(token: token),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Failed to resolve';
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl/timestamps/$timestampId/resolve'),
+            headers: _headers(token: token),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Failed to resolve';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
+    }
   }
 
   Future<Map<String, dynamic>> addComment({
@@ -388,14 +451,23 @@ class ApiService {
     required bool isActive,
     String? reason,
   }) async {
-    final response = await http.patch(
-      Uri.parse('$baseUrl/admin/users/$userId'),
-      headers: _headers(token: token),
-      body: jsonEncode({'is_active': isActive, if (reason != null) 'reason': reason}),
-    );
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    if (response.statusCode >= 200 && response.statusCode < 300) return data;
-    throw data['message'] ?? 'Update failed';
+    try {
+      final response = await http
+          .patch(
+            Uri.parse('$baseUrl/admin/users/$userId'),
+            headers: _headers(token: token),
+            body: jsonEncode({'is_active': isActive, if (reason != null) 'reason': reason}),
+          )
+          .timeout(_timeout);
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 && response.statusCode < 300) return data;
+      throw data['message'] ?? 'Update failed';
+    } on TimeoutException catch (e) {
+      throw _mapError(e);
+    } on SocketException catch (e) {
+      throw _mapError(e);
+    }
+    }
   }
 
   Future<Map<String, dynamic>> adminGetAllFeedback({required String token}) =>

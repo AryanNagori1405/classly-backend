@@ -90,6 +90,16 @@ app.get('/', (_req, res) => {
     res.json({ message: 'Welcome to Classly Backend API', version: '2.0.0' });
 });
 
+// ── Health check ──────────────────────────────────────────────────────────────
+app.get('/api/health', async (_req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+    } catch (err) {
+        res.status(503).json({ status: 'error', db: 'disconnected', message: err.message });
+    }
+});
+
 app.use('/api/auth',          authRoutes);
 app.use('/api/courses',       courseRoutes);
 app.use('/api/enrollments',   enrollmentRoutes);

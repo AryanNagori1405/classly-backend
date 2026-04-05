@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../config/database');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { sendOTPEmail } = require('../services/emailService');
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -71,10 +72,17 @@ router.post('/verify-uid', async (req, res) => {
             [otp, otpExpiry, newAttempts, user.id]
         );
 
-        // In production: send OTP via SMS / email.
+        // In production: send OTP via email if user has an email address.
         // In development only: log OTP server-side for testing.
         if (process.env.NODE_ENV !== 'production') {
             console.log(`[DEV] OTP for user ${user.id}: ${otp}`);
+        }
+
+        if (user.email) {
+            // Fire-and-forget; a delivery failure must not block the response.
+            sendOTPEmail(user.email, otp, user.name).catch((err) =>
+                console.error('[auth] sendOTPEmail error:', err)
+            );
         }
 
         res.json({
