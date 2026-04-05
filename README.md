@@ -37,10 +37,28 @@ Full-stack application (Node.js backend + Flutter frontend) for sharing classroo
 
 ### 1. Database setup
 
+**First-time setup** (creates the database and all tables):
 ```bash
 psql -U postgres -c "CREATE DATABASE classly_db;"
 psql -U postgres -d classly_db -f backend/database-setup.sql
 ```
+
+**Full reset** (drops and recreates the database from scratch, including seed data):
+```bash
+# Stop the backend server first, then run:
+psql -U postgres -f backend/database-reset.sql
+
+# Verify all tables were created:
+psql -U postgres -d classly_db -c "\dt"
+```
+
+After a reset, the following test credentials are available (OTP auth – no password needed):
+
+| Role    | UID      | RegID        |
+|---------|----------|--------------|
+| Admin   | ADMIN001 | ADMIN-REG-001 |
+| Student | STU001   | 202401001    |
+| Teacher | TCH001   | 202301001    |
 
 ### 2. Backend
 
