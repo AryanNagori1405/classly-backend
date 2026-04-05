@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
+import 'providers/video_provider.dart';
+import 'providers/community_provider.dart';
+import 'providers/feedback_provider.dart';
 import 'services/api_service.dart';
 import 'screens/splash_screen.dart';
 
@@ -16,6 +19,15 @@ void main() async {
       providers: [
         ChangeNotifierProvider(
           create: (_) => AuthProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => VideoProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CommunityProvider(apiService),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FeedbackProvider(apiService),
         ),
       ],
       child: const MyApp(),

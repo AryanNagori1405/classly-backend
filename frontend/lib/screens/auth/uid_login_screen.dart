@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../home/student_home.dart';
 import '../home/teacher_home.dart';
+import '../home/admin_home_screen.dart';
 
 // ── Step 1: Enter UID or RegId ───────────────────────────────────────────────
 class UIDLoginScreen extends StatefulWidget {
@@ -248,9 +249,11 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       final role = auth.user?.role ?? 'student';
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => role == 'teacher'
-              ? const TeacherHomeScreen()
-              : const StudentHomeScreen(),
+          builder: (_) => role == 'admin'
+              ? const AdminHomeScreen()
+              : role == 'teacher'
+                  ? const TeacherHomeScreen()
+                  : const StudentHomeScreen(),
         ),
         (route) => false,
       );

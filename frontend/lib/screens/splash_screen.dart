@@ -9,6 +9,7 @@ import 'welcome_screen.dart';
 import 'role_selection_screen.dart';
 import 'home/student_home.dart';
 import 'home/teacher_home.dart';
+import 'home/admin_home_screen.dart';
 import 'profile/edit_profile_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -133,9 +134,11 @@ class _SplashScreenState extends State<SplashScreen>
 
         Navigator.of(context).pushAndRemoveUntil(
           SmoothPageTransition(
-            page: userRole == 'student'
-                ? const StudentHomeScreen()
-                : const TeacherHomeScreen(),
+            page: userRole == 'admin'
+                ? const AdminHomeScreen()
+                : userRole == 'teacher'
+                    ? const TeacherHomeScreen()
+                    : const StudentHomeScreen(),
           ),
           (route) => false,
         );
