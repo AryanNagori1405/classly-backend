@@ -23,7 +23,6 @@ class _SignupScreenState extends State<SignupScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _uidController = TextEditingController();
   final _regIdController = TextEditingController();
   final _departmentController = TextEditingController();
   final _semesterController = TextEditingController();
@@ -94,7 +93,6 @@ class _SignupScreenState extends State<SignupScreen>
     _floatController.dispose();
     _nameController.dispose();
     _emailController.dispose();
-    _uidController.dispose();
     _regIdController.dispose();
     _departmentController.dispose();
     _semesterController.dispose();
@@ -142,7 +140,6 @@ class _SignupScreenState extends State<SignupScreen>
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         role: widget.selectedRole,
-        uid: _uidController.text.trim(),
         regId: _regIdController.text.trim(),
         department: _departmentController.text.trim(),
         semester: _semesterController.text.trim(),
@@ -328,10 +325,7 @@ class _SignupScreenState extends State<SignupScreen>
                             builder: (context, value, child) {
                               return Transform.scale(
                                 scale: value,
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Container(
@@ -377,7 +371,7 @@ class _SignupScreenState extends State<SignupScreen>
 
                           SizedBox(height: size.height * 0.03),
 
-                          // Form Fields with Staggered Animation
+                          // Full Name Field
                           _buildAnimatedTextField(
                             controller: _nameController,
                             hintText: 'Full Name',
@@ -393,8 +387,10 @@ class _SignupScreenState extends State<SignupScreen>
                             },
                             delay: 0,
                           ),
+
                           const SizedBox(height: 14),
 
+                          // Email Field
                           _buildAnimatedTextField(
                             controller: _emailController,
                             hintText: 'Email Address',
@@ -410,45 +406,29 @@ class _SignupScreenState extends State<SignupScreen>
                             },
                             delay: 100,
                           ),
+
                           const SizedBox(height: 14),
 
-                          // Two Column Layout for UID and RegID
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildAnimatedTextField(
-                                  controller: _uidController,
-                                  hintText: 'UID',
-                                  icon: Icons.badge_rounded,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    return null;
-                                  },
-                                  delay: 200,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildAnimatedTextField(
-                                  controller: _regIdController,
-                                  hintText: 'Reg ID',
-                                  icon: Icons.assignment_rounded,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    return null;
-                                  },
-                                  delay: 300,
-                                ),
-                              ),
-                            ],
+                          // Registration ID Field (Full Width - UID Removed)
+                          _buildAnimatedTextField(
+                            controller: _regIdController,
+                            hintText: 'Registration Number',
+                            icon: Icons.assignment_rounded,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Registration Number is required';
+                              }
+                              if (value.length < 3) {
+                                return 'Invalid Registration Number';
+                              }
+                              return null;
+                            },
+                            delay: 200,
                           ),
+
                           const SizedBox(height: 14),
 
-                          // Department and Semester
+                          // Department and Semester (Side by Side)
                           Row(
                             children: [
                               Expanded(
@@ -462,7 +442,7 @@ class _SignupScreenState extends State<SignupScreen>
                                     }
                                     return null;
                                   },
-                                  delay: 400,
+                                  delay: 300,
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -477,13 +457,15 @@ class _SignupScreenState extends State<SignupScreen>
                                     }
                                     return null;
                                   },
-                                  delay: 500,
+                                  delay: 400,
                                 ),
                               ),
                             ],
                           ),
+
                           const SizedBox(height: 14),
 
+                          // Password Field
                           _buildAnimatedTextField(
                             controller: _passwordController,
                             hintText: 'Password',
@@ -502,10 +484,12 @@ class _SignupScreenState extends State<SignupScreen>
                               }
                               return null;
                             },
-                            delay: 600,
+                            delay: 500,
                           ),
+
                           const SizedBox(height: 14),
 
+                          // Confirm Password Field
                           _buildAnimatedTextField(
                             controller: _confirmPasswordController,
                             hintText: 'Confirm Password',
@@ -521,12 +505,12 @@ class _SignupScreenState extends State<SignupScreen>
                               }
                               return null;
                             },
-                            delay: 700,
+                            delay: 600,
                           ),
 
                           SizedBox(height: size.height * 0.02),
 
-                          // Terms & Conditions
+                          // Terms & Conditions Checkbox
                           TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0, end: 1),
                             duration: const Duration(milliseconds: 1300),
@@ -534,15 +518,13 @@ class _SignupScreenState extends State<SignupScreen>
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(0, 40 * (1 - value)),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(
-                                  AppConstants.paddingMedium),
+                                AppConstants.paddingMedium,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -595,8 +577,7 @@ class _SignupScreenState extends State<SignupScreen>
                                         children: [
                                           TextSpan(
                                             text: 'Terms & Conditions',
-                                            style: AppTextStyles.caption
-                                                .copyWith(
+                                            style: AppTextStyles.caption.copyWith(
                                               color: AppColors.primaryColor,
                                               fontWeight: FontWeight.w800,
                                             ),
@@ -612,18 +593,17 @@ class _SignupScreenState extends State<SignupScreen>
 
                           SizedBox(height: size.height * 0.03),
 
-                          // Sign Up Button
+                          // Create Account Button
                           Consumer<AuthProvider>(
                             builder: (context, authProvider, _) {
                               return _buildAnimatedButton(
                                 label: authProvider.isLoading
                                     ? 'Creating Account...'
                                     : 'Create Account',
-                                onPressed: authProvider.isLoading
-                                    ? () {}
-                                    : _handleSignup,
+                                onPressed:
+                                    authProvider.isLoading ? () {} : _handleSignup,
                                 isLoading: authProvider.isLoading,
-                                delay: 800,
+                                delay: 700,
                               );
                             },
                           ),
@@ -638,10 +618,7 @@ class _SignupScreenState extends State<SignupScreen>
                             builder: (context, value, child) {
                               return Transform.translate(
                                 offset: Offset(0, 40 * (1 - value)),
-                                child: Opacity(
-                                  opacity: value,
-                                  child: child,
-                                ),
+                                child: Opacity(opacity: value, child: child),
                               );
                             },
                             child: Row(
@@ -700,10 +677,7 @@ class _SignupScreenState extends State<SignupScreen>
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(0, 50 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: Container(
@@ -740,11 +714,11 @@ class _SignupScreenState extends State<SignupScreen>
             ),
             suffixIcon: isPassword
                 ? GestureDetector(
-                    onTap: () {
-                      onShowPasswordChanged?.call(!showPassword);
-                    },
+                    onTap: () => onShowPasswordChanged?.call(!showPassword),
                     child: Icon(
-                      showPassword ? Icons.visibility : Icons.visibility_off,
+                      showPassword
+                          ? Icons.visibility_rounded
+                          : Icons.visibility_off_rounded,
                       color: AppColors.primaryColor.withOpacity(0.6),
                       size: 20,
                     ),
@@ -816,10 +790,7 @@ class _SignupScreenState extends State<SignupScreen>
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(0, 50 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: SizedBox(

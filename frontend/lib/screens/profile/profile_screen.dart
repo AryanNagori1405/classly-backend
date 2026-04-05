@@ -461,15 +461,52 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               const SizedBox(height: 10),
 
+              // Registration Number with Icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.assignment_rounded,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'REG: ${user?.regId ?? 'N/A'}',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
               // Email
-              Text(
-                user?.email ?? 'email@example.com',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.email_rounded,
+                    color: Colors.white.withOpacity(0.8),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      user?.email ?? 'email@example.com',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 18),
@@ -596,9 +633,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               // Timeline Style Details
               _buildTimelineItem(
                 number: '1',
-                label: 'UID',
-                value: user.uid,
-                icon: Icons.badge_rounded,
+                label: 'Registration Number',
+                value: user.regId,
+                icon: Icons.assignment_rounded,
                 color: AppColors.primaryColor,
               ),
 
@@ -606,16 +643,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '2',
-                label: 'Registration ID',
-                value: user.regId,
-                icon: Icons.assignment_rounded,
-                color: const Color(0xFF06B6D4),
-              ),
-
-              _buildTimelineConnector(),
-
-              _buildTimelineItem(
-                number: '3',
                 label: 'Department',
                 value: user.department,
                 icon: Icons.business_rounded,
@@ -625,7 +652,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               _buildTimelineConnector(),
 
               _buildTimelineItem(
-                number: '4',
+                number: '3',
                 label: 'Semester',
                 value: user.semester,
                 icon: Icons.school_rounded,
@@ -733,9 +760,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               // Timeline Style Details
               _buildTimelineItem(
                 number: '1',
-                label: 'UID',
-                value: user.uid,
-                icon: Icons.badge_rounded,
+                label: 'Registration Number',
+                value: user.regId,
+                icon: Icons.assignment_rounded,
                 color: AppColors.primaryColor,
               ),
 
@@ -743,16 +770,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '2',
-                label: 'Registration ID',
-                value: user.regId,
-                icon: Icons.assignment_rounded,
-                color: const Color(0xFF06B6D4),
-              ),
-
-              _buildTimelineConnector(),
-
-              _buildTimelineItem(
-                number: '3',
                 label: 'Department',
                 value: user.department,
                 icon: Icons.business_rounded,
@@ -762,7 +779,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               _buildTimelineConnector(),
 
               _buildTimelineItem(
-                number: '4',
+                number: '3',
                 label: 'Specialization',
                 value: user.semester,
                 icon: Icons.star_rounded,
