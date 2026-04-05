@@ -20,9 +20,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   late AnimationController _pageController;
   late Animation<Offset> _pageSlideAnimation;
   late Animation<double> _pageFadeAnimation;
-  late AnimationController _floatController;
-  late Animation<double> _floatAnimation;
-
   final _regNumberController = TextEditingController();
   final _emailController = TextEditingController();
   final _otpController = TextEditingController();
@@ -50,14 +47,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       CurvedAnimation(parent: _pageController, curve: Curves.easeInCubic),
     );
 
-    _floatController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
-      vsync: this,
-    )..repeat(reverse: true);
-    _floatAnimation = Tween<double>(begin: 0, end: 12).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOutSine),
-    );
-
     _timerController = AnimationController(
       duration: const Duration(seconds: 60),
       vsync: this,
@@ -69,7 +58,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   @override
   void dispose() {
     _pageController.dispose();
-    _floatController.dispose();
     _timerController.dispose();
     _regNumberController.dispose();
     _emailController.dispose();
