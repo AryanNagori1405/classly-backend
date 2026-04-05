@@ -486,7 +486,7 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
 
           const SizedBox(height: 24),
 
-          // 🔥 FULL WIDTH + ROUNDED BOX
+          // Upload Box
           GestureDetector(
             onTap: () {
               setState(() => _selectedVideo = 'lecture_001.mp4');
@@ -497,11 +497,10 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                 duration: const Duration(milliseconds: 300),
                 height: _selectedVideo.isEmpty ? 240 : null,
                 margin: const EdgeInsets.symmetric(
-                    horizontal:
-                        AppConstants.paddingLarge), // slight side spacing
+                    horizontal: AppConstants.paddingLarge),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20), // 🔥 smooth edges
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: _selectedVideo.isEmpty
                         ? AppColors.primaryColor.withOpacity(0.3)
@@ -522,8 +521,7 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius:
-                        BorderRadius.circular(20), // 🔥 ripple stays inside
+                    borderRadius: BorderRadius.circular(20),
                     onTap: () {
                       setState(() => _selectedVideo = 'lecture_001.mp4');
                     },
@@ -531,8 +529,6 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                         ? Padding(
                             padding: const EdgeInsets.only(top: 28),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
                                   width: 80,
@@ -546,11 +542,6 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: AppColors.primaryColor
-                                          .withOpacity(0.2),
-                                      width: 2,
-                                    ),
                                   ),
                                   child: const Icon(
                                     Icons.video_library_rounded,
@@ -564,7 +555,6 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                   style: AppTextStyles.bodyLarge.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: Colors.black87,
-                                    fontSize: 16,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -572,30 +562,22 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                   'or drag and drop your file here',
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
+                                      horizontal: 14, vertical: 8),
                                   decoration: BoxDecoration(
                                     color:
                                         AppColors.primaryColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.primaryColor
-                                          .withOpacity(0.2),
-                                    ),
                                   ),
                                   child: Text(
                                     'MP4 • WebM • OGG (max 2GB)',
                                     style: AppTextStyles.caption.copyWith(
                                       color: AppColors.primaryColor,
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 11,
                                     ),
                                   ),
                                 ),
@@ -606,28 +588,24 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                             padding: const EdgeInsets.symmetric(vertical: 20),
                             child: Row(
                               children: [
+                                // Icon
                                 Container(
-                                  width: 70,
-                                  height: 70,
+                                  width: 60,
+                                  height: 60,
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.green.withOpacity(0.2),
-                                        Colors.green.withOpacity(0.05),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: Colors.green.withOpacity(0.3),
-                                    ),
+                                    color: Colors.green.withOpacity(0.15),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
-                                    Icons.check_circle_rounded,
+                                    Icons.check_circle,
                                     color: Colors.green,
-                                    size: 36,
+                                    size: 30,
                                   ),
                                 ),
-                                const SizedBox(width: 18),
+
+                                const SizedBox(width: 12),
+
+                                // 🔥 TEXT AREA (FIXED OVERFLOW)
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -635,12 +613,14 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                     children: [
                                       Text(
                                         _selectedVideo,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                         style: AppTextStyles.bodyLarge.copyWith(
                                           fontWeight: FontWeight.w800,
                                           color: Colors.black87,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 6),
                                       Row(
                                         children: [
                                           Icon(
@@ -649,12 +629,16 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                             color: Colors.green.shade700,
                                           ),
                                           const SizedBox(width: 6),
-                                          Text(
-                                            '1.2 GB • 45:30 • Ready to upload',
-                                            style:
-                                                AppTextStyles.caption.copyWith(
-                                              color: Colors.green.shade700,
-                                              fontWeight: FontWeight.w700,
+                                          Expanded(
+                                            child: Text(
+                                              '1.2 GB • 45:30 • Ready to upload',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                              style: AppTextStyles.caption
+                                                  .copyWith(
+                                                color: Colors.green.shade700,
+                                                fontWeight: FontWeight.w700,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -662,21 +646,22 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
                                     ],
                                   ),
                                 ),
+
+                                const SizedBox(width: 8),
+
+                                // Delete button
                                 GestureDetector(
                                   onTap: () =>
                                       setState(() => _selectedVideo = ''),
                                   child: Container(
-                                    width: 44,
-                                    height: 44,
+                                    width: 40,
+                                    height: 40,
                                     decoration: BoxDecoration(
                                       color: Colors.red.withOpacity(0.12),
                                       borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: Colors.red.withOpacity(0.2),
-                                      ),
                                     ),
                                     child: Icon(
-                                      Icons.close_rounded,
+                                      Icons.close,
                                       color: Colors.red.shade700,
                                     ),
                                   ),
