@@ -42,9 +42,18 @@ class _UIDLoginScreenState extends State<UIDLoginScreen> {
         MaterialPageRoute(builder: (_) => const OTPVerificationScreen()),
       );
     } else {
+      final errorMsg = auth.error ?? 'Verification failed';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(auth.error ?? 'Verification failed'),
+        content: Text(errorMsg),
         backgroundColor: AppColors.errorColor,
+        duration: const Duration(seconds: 5),
+        action: auth.isNetworkError
+            ? SnackBarAction(
+                label: 'Retry',
+                textColor: Colors.white,
+                onPressed: _handleContinue,
+              )
+            : null,
       ));
     }
   }

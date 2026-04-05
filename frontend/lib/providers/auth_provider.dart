@@ -10,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _error;
+  bool _isNetworkError = false;
 
   // Holds data between the two OTP steps
   int? _pendingUserId;
@@ -27,6 +28,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null && _token != null;
   int? get pendingUserId => _pendingUserId;
   String? get pendingUserRole => _pendingUserRole;
+  /// True when the last error was a network / timeout issue (useful for showing retry UI).
+  bool get isNetworkError => _isNetworkError;
 
   // ── Persistence ──────────────────────────────────────────────────────────────
   Future<void> _loadUserFromStorage() async {
@@ -52,6 +55,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> verifyUID({String? uid, String? regId}) async {
     _isLoading = true;
     _error = null;
+    _isNetworkError = false;
     notifyListeners();
     try {
       final response = await _apiService.verifyUID(uid: uid, regId: regId);
@@ -61,7 +65,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      final msg = e.toString();
+      _error = msg;
+      _isNetworkError = msg.contains('timed out') || msg.contains('Cannot reach');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -77,6 +83,7 @@ class AuthProvider extends ChangeNotifier {
     }
     _isLoading = true;
     _error = null;
+    _isNetworkError = false;
     notifyListeners();
     try {
       final response =
@@ -111,7 +118,9 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      final msg = e.toString();
+      _error = msg;
+      _isNetworkError = msg.contains('timed out') || msg.contains('Cannot reach');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -129,6 +138,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _token = null;
     _error = null;
+    _isNetworkError = false;
     _pendingUserId = null;
     notifyListeners();
   }
@@ -142,6 +152,7 @@ class AuthProvider extends ChangeNotifier {
 
   void clearError() {
     _error = null;
+    _isNetworkError = false;
     notifyListeners();
   }
 }

@@ -10,6 +10,35 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+const sendOTPEmail = async (email, otp, name) => {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+        console.warn('[emailService] SMTP not configured – skipping OTP email send.');
+        return false;
+    }
+
+    const mailOptions = {
+        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        to: email,
+        subject: 'Your Classly OTP Code',
+        html: `
+            <h2>Hello, ${name || 'User'}!</h2>
+            <p>Your One-Time Password (OTP) for Classly login is:</p>
+            <h1 style="letter-spacing: 8px; color: #0056b3;">${otp}</h1>
+            <p>This OTP is valid for <strong>10 minutes</strong>. Do not share it with anyone.</p>
+            <p>If you did not request this OTP, please ignore this email.</p>
+        `
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ OTP email sent to ${email}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending OTP email:', error);
+        return false;
+    }
+};
+
 const sendVerificationEmail = async (email, token) => {
     const verificationUrl = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
     
@@ -57,4 +86,4 @@ const sendPasswordResetEmail = async (email, token) => {
     }
 };
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail };
+module.exports = { sendOTPEmail, sendVerificationEmail, sendPasswordResetEmail };
