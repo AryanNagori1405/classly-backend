@@ -311,13 +311,7 @@ class _SearchScreenState extends State<SearchScreen>
                   offset: const Offset(0, 6),
                   spreadRadius: isFocused ? 2 : 0,
                 ),
-                if (isFocused)
-                  BoxShadow(
-                    color: AppColors.primaryColor.withOpacity(0.25),
-                    blurRadius: 40,
-                    offset: const Offset(0, 12),
-                    spreadRadius: 4,
-                  ),
+
               ],
             ),
             child: TextField(
@@ -356,9 +350,7 @@ class _SearchScreenState extends State<SearchScreen>
                       )
                     : null,
                 filled: true,
-                fillColor: isFocused
-                    ? AppColors.primaryColor.withOpacity(0.05)
-                    : Colors.white,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide(

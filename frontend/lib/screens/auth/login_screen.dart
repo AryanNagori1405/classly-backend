@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
-import '../home/student_home.dart';
-import '../home/teacher_home.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 import 'uid_login_screen.dart';

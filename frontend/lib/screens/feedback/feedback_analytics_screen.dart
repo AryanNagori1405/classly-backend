@@ -16,7 +16,6 @@ class _FeedbackAnalyticsScreenState extends State<FeedbackAnalyticsScreen> {
   final ApiService _apiService = ApiService();
 
   List<Map<String, dynamic>> _feedbackList = [];
-  Map<String, dynamic> _analytics = {};
   bool _isLoading = false;
   String? _error;
 
@@ -33,14 +32,10 @@ class _FeedbackAnalyticsScreenState extends State<FeedbackAnalyticsScreen> {
     });
     try {
       final token = context.read<AuthProvider>().token!;
-      final results = await Future.wait([
-        _apiService.getReceivedFeedback(token: token),
-        _apiService.getFeedbackAnalytics(token: token),
-      ]);
+      final result = await _apiService.getReceivedFeedback(token: token);
       setState(() {
         _feedbackList = List<Map<String, dynamic>>.from(
-            results[0]['feedback'] as List? ?? []);
-        _analytics = results[1] as Map<String, dynamic>;
+            result['feedback'] as List? ?? []);
       });
     } catch (e) {
       setState(() => _error = e.toString());
