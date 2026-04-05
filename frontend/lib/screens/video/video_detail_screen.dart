@@ -49,14 +49,19 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
     super.dispose();
   }
 
+  /// Parse the video id safely. Returns null if the id is not a valid integer.
+  int? get _videoId => int.tryParse(widget.video.id);
+
   Future<void> _loadTimestamps() async {
+    final videoId = _videoId;
+    if (videoId == null) return;
     setState(() => _isLoadingTimestamps = true);
     try {
       final auth = context.read<AuthProvider>();
       final api = ApiService();
       final result = await api.getTimestamps(
         token: auth.token!,
-        videoId: int.tryParse(widget.video.id) ?? 0,
+        videoId: videoId,
       );
       setState(() {
         _timestamps = List<Map<String, dynamic>>.from(
@@ -67,13 +72,15 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
   }
 
   Future<void> _loadFAQ() async {
+    final videoId = _videoId;
+    if (videoId == null) return;
     setState(() => _isLoadingFAQ = true);
     try {
       final auth = context.read<AuthProvider>();
       final api = ApiService();
       final result = await api.getTimestampFAQ(
         token: auth.token!,
-        videoId: int.tryParse(widget.video.id) ?? 0,
+        videoId: videoId,
       );
       setState(() {
         _faqItems =
@@ -90,6 +97,11 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
       _showSnack('Please enter both timestamp and your doubt');
       return;
     }
+    final videoId = _videoId;
+    if (videoId == null) {
+      _showSnack('Invalid video. Cannot add doubt.');
+      return;
+    }
     // Validate HH:MM:SS or MM:SS
     final tsRegex = RegExp(r'^\d{1,2}:\d{2}(:\d{2})?$');
     if (!tsRegex.hasMatch(ts)) {
@@ -101,7 +113,7 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
       final api = ApiService();
       await api.addTimestampDoubt(
         token: auth.token!,
-        videoId: int.tryParse(widget.video.id) ?? 0,
+        videoId: videoId,
         timestampValue: ts,
         questionText: q,
       );
@@ -116,14 +128,15 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
   }
 
   Future<void> _toggleBookmark() async {
+    final videoId = _videoId;
+    if (videoId == null) return;
     final auth = context.read<AuthProvider>();
     final api = ApiService();
-    final id = int.tryParse(widget.video.id) ?? 0;
     try {
       if (_isBookmarked) {
-        await api.removeBookmark(token: auth.token!, videoId: id);
+        await api.removeBookmark(token: auth.token!, videoId: videoId);
       } else {
-        await api.addBookmark(token: auth.token!, videoId: id);
+        await api.addBookmark(token: auth.token!, videoId: videoId);
       }
       setState(() => _isBookmarked = !_isBookmarked);
       _showSnack(_isBookmarked ? 'Bookmarked!' : 'Bookmark removed');
@@ -133,12 +146,14 @@ class _VideoDetailScreenState extends State<VideoDetailScreen>
   }
 
   Future<void> _downloadVideo() async {
+    final videoId = _videoId;
+    if (videoId == null) return;
     final auth = context.read<AuthProvider>();
     final api = ApiService();
     try {
       final result = await api.downloadVideo(
         token: auth.token!,
-        videoId: int.tryParse(widget.video.id) ?? 0,
+        videoId: videoId,
       );
       _showSnack('Download link: ${result['download_link'] ?? 'Ready'}');
     } catch (e) {

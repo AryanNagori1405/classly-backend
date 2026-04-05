@@ -64,8 +64,10 @@ const apiLimiter = rateLimit({
     message: { message: 'Rate limit exceeded. Please slow down.' },
 });
 
-app.use('/api/auth', authLimiter);
+// General API limiter (applied first, more broad)
 app.use('/api/', apiLimiter);
+// Stricter limiter applied specifically to auth routes (overrides general for /api/auth)
+app.use('/api/auth', authLimiter);
 
 // ── Body parsers ──────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));

@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: classly_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-classly_dev_pass}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in your environment or .env file}
     ports:
       - '5432:5432'
     volumes:

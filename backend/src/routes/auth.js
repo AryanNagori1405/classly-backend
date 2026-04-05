@@ -48,32 +48,40 @@ router.post('/verify-uid', async (req, res) => {
             return res.status(403).json({ message: 'Your account has been suspended.' });
         }
 
-        // Enforce rate-limit: max 5 OTP requests per hour (stored in otp_attempts)
-        if (user.otp_attempts >= 5 && user.otp_expires_at && new Date(user.otp_expires_at) > new Date()) {
-            return res.status(429).json({ message: 'Too many OTP requests. Please wait before retrying.' });
+        // Enforce OTP rate-limit: max 5 requests per window.
+        // Check expiry FIRST so a new window resets the counter correctly.
+        const otpWindowExpired = !user.otp_expires_at ||
+            new Date(user.otp_expires_at) <= new Date();
+
+        if (!otpWindowExpired && user.otp_attempts >= 5) {
+            return res.status(429).json({
+                message: 'Too many OTP requests. Please wait before retrying.'
+            });
         }
 
         // Generate OTP and set 10-minute expiry
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+        // Reset counter on new window; increment within the same window
+        const newAttempts = otpWindowExpired ? 1 : user.otp_attempts + 1;
         await pool.query(
             `UPDATE users SET otp_code = $1, otp_expires_at = $2,
-             otp_attempts = CASE WHEN otp_expires_at < NOW() THEN 1 ELSE otp_attempts + 1 END,
-             updated_at = NOW() WHERE id = $3`,
-            [otp, otpExpiry, user.id]
+             otp_attempts = $3, updated_at = NOW() WHERE id = $4`,
+            [otp, otpExpiry, newAttempts, user.id]
         );
 
         // In production: send OTP via SMS / email.
-        // For development we return the OTP in the response.
-        const isDev = process.env.NODE_ENV !== 'production';
+        // In development only: log OTP server-side for testing.
+        if (process.env.NODE_ENV !== 'production') {
+            console.log(`[DEV] OTP for user ${user.id}: ${otp}`);
+        }
 
         res.json({
             message: 'OTP sent successfully',
             user_id: user.id,
             name: user.name,
             role: user.role,
-            ...(isDev && { otp_dev: otp })   // only exposed in dev mode
         });
     } catch (error) {
         console.error('Error in verify-uid:', error);
