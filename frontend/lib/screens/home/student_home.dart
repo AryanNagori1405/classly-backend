@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 import '../video/video_list_screen.dart';
+import '../video/my_contributions_screen.dart';
 import '../community/community_list_screen.dart';
 import '../doubts/doubts_list_screen.dart';
 import '../profile/profile_screen.dart';
@@ -288,10 +289,18 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                           delay: 200,
                         ),
                         _buildQuickActionCard(
-                          icon: Icons.download_outlined,
-                          label: 'Downloads',
+                          icon: Icons.upload_file_outlined,
+                          label: 'My Contributions',
                           color: const Color(0xFF10B981),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MyContributionsScreen(),
+                              ),
+                            );
+                          },
                           delay: 300,
                         ),
                       ],

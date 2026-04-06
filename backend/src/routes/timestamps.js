@@ -339,4 +339,47 @@ router.get('/video/:videoId/faq', authenticateToken, async (req, res) => {
     }
 });
 
+// PUT /api/timestamps/:timestampId/response - Teacher adds official response to a doubt
+router.put('/:timestampId/response', authenticateToken, async (req, res) => {
+    try {
+        const { timestampId } = req.params;
+        const { teacher_response } = req.body;
+        const userId = req.user.id;
+
+        if (!teacher_response) {
+            return res.status(400).json({ message: 'teacher_response is required' });
+        }
+
+        const timestampResult = await pool.query(
+            `SELECT vt.*, v.teacher_id
+             FROM video_timestamps vt
+             JOIN videos v ON vt.video_id = v.id
+             WHERE vt.id = $1`,
+            [timestampId]
+        );
+
+        if (timestampResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Timestamp not found' });
+        }
+
+        if (timestampResult.rows[0].teacher_id !== userId) {
+            return res.status(403).json({ message: 'Only the teacher of this video can respond' });
+        }
+
+        const result = await pool.query(
+            `UPDATE video_timestamps
+             SET teacher_response = $1, is_resolved = TRUE,
+                 resolved_by = $2, updated_at = CURRENT_TIMESTAMP
+             WHERE id = $3
+             RETURNING *`,
+            [teacher_response, userId, timestampId]
+        );
+
+        res.json({ message: 'Teacher response saved', timestamp: result.rows[0] });
+    } catch (error) {
+        console.error('Error saving teacher response:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 module.exports = router;

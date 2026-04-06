@@ -39,12 +39,54 @@ CREATE INDEX IF NOT EXISTS idx_users_reg_id ON users (reg_id);
 CREATE INDEX IF NOT EXISTS idx_users_role   ON users (role);
 
 -- =====================================================================
+-- COURSES (defined before videos so the FK can reference it)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS courses (
+    id                  SERIAL PRIMARY KEY,
+    title               VARCHAR(500) NOT NULL,
+    description         TEXT,
+    created_by          INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    enable_videos       BOOLEAN      NOT NULL DEFAULT TRUE,
+    enable_communities  BOOLEAN      NOT NULL DEFAULT TRUE,
+    videos_count        INTEGER      NOT NULL DEFAULT 0,
+    created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================================
+-- ENROLLMENTS
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS enrollments (
+    id          SERIAL PRIMARY KEY,
+    course_id   INTEGER  NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    student_id  INTEGER  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    enrolled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (course_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_enrollments_course_id   ON enrollments (course_id);
+CREATE INDEX IF NOT EXISTS idx_enrollments_student_id  ON enrollments (student_id);
+
+-- =====================================================================
+-- LESSONS (kept for backward compatibility)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS lessons (
+    id          SERIAL PRIMARY KEY,
+    course_id   INTEGER  NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    title       VARCHAR(500) NOT NULL,
+    content     TEXT,
+    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =====================================================================
 -- VIDEOS / LECTURES TABLE
 -- Auto-deleted after 7 days via scheduled job
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS videos (
     id                  SERIAL PRIMARY KEY,
     teacher_id          INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id           INTEGER      REFERENCES courses(id) ON DELETE SET NULL,
     title               VARCHAR(500) NOT NULL,
     description         TEXT,
     subject             VARCHAR(255),
@@ -95,15 +137,16 @@ CREATE INDEX IF NOT EXISTS idx_video_notes_video_id ON video_notes (video_id);
 -- Students ask doubts at specific timestamps in a video
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS video_timestamps (
-    id              SERIAL PRIMARY KEY,
-    video_id        INTEGER      NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
-    student_id      INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    timestamp_value VARCHAR(20)  NOT NULL,       -- HH:MM:SS format
-    question_text   TEXT         NOT NULL,
-    is_resolved     BOOLEAN      NOT NULL DEFAULT FALSE,
-    resolved_by     INTEGER      REFERENCES users(id),
-    created_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id               SERIAL PRIMARY KEY,
+    video_id         INTEGER      NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    student_id       INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    timestamp_value  VARCHAR(20)  NOT NULL,       -- HH:MM:SS format
+    question_text    TEXT         NOT NULL,
+    is_resolved      BOOLEAN      NOT NULL DEFAULT FALSE,
+    teacher_response TEXT,
+    resolved_by      INTEGER      REFERENCES users(id),
+    created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_timestamps_video_id ON video_timestamps (video_id);
@@ -147,12 +190,14 @@ CREATE TABLE IF NOT EXISTS video_downloads (
 
 -- =====================================================================
 -- STUDENT WATCH HISTORY
+-- Tracks resume position for each video per user
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS student_watch_history (
-    id          SERIAL PRIMARY KEY,
-    user_id     INTEGER  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    video_id    INTEGER  NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
-    watched_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    video_id        INTEGER  NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    last_watch_time INTEGER  NOT NULL DEFAULT 0,  -- seconds from start
+    watched_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, video_id)
 );
 
@@ -177,6 +222,29 @@ CREATE TABLE IF NOT EXISTS bookmarks (
     created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (user_id, video_id)
 );
+
+-- =====================================================================
+-- STUDENT CONTRIBUTIONS
+-- Students upload supplementary videos to help peers
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS student_contributions (
+    id               SERIAL PRIMARY KEY,
+    student_id       INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    related_video_id INTEGER      REFERENCES videos(id) ON DELETE SET NULL,
+    title            VARCHAR(500) NOT NULL,
+    description      TEXT,
+    file_url         TEXT         NOT NULL,
+    file_type        VARCHAR(20)  DEFAULT 'video',
+    views_count      INTEGER      NOT NULL DEFAULT 0,
+    upvotes          INTEGER      NOT NULL DEFAULT 0,
+    is_approved      BOOLEAN      NOT NULL DEFAULT TRUE,
+    is_deleted       BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_contributions_student_id  ON student_contributions (student_id);
+CREATE INDEX IF NOT EXISTS idx_contributions_video_id    ON student_contributions (related_video_id);
 
 -- =====================================================================
 -- COMMUNITIES
@@ -271,47 +339,6 @@ CREATE TABLE IF NOT EXISTS admin_actions_log (
     target_user_id  INTEGER  REFERENCES users(id),
     description     TEXT,
     created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- =====================================================================
--- COURSES (kept for backward compatibility with existing routes)
--- =====================================================================
-CREATE TABLE IF NOT EXISTS courses (
-    id                  SERIAL PRIMARY KEY,
-    title               VARCHAR(500) NOT NULL,
-    description         TEXT,
-    created_by          INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    enable_videos       BOOLEAN      NOT NULL DEFAULT TRUE,
-    enable_communities  BOOLEAN      NOT NULL DEFAULT TRUE,
-    videos_count        INTEGER      NOT NULL DEFAULT 0,
-    created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- =====================================================================
--- ENROLLMENTS (kept for backward compatibility)
--- =====================================================================
-CREATE TABLE IF NOT EXISTS enrollments (
-    id          SERIAL PRIMARY KEY,
-    course_id   INTEGER  NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    student_id  INTEGER  NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (course_id, student_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_enrollments_course_id   ON enrollments (course_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_student_id  ON enrollments (student_id);
-
--- =====================================================================
--- LESSONS (kept for backward compatibility)
--- =====================================================================
-CREATE TABLE IF NOT EXISTS lessons (
-    id          SERIAL PRIMARY KEY,
-    course_id   INTEGER  NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    title       VARCHAR(500) NOT NULL,
-    content     TEXT,
-    created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================================
