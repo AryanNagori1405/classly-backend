@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 
@@ -18,6 +21,14 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
   late AnimationController _appBarController;
   late Animation<Offset> _appBarSlideAnimation;
   late Animation<double> _appBarFadeAnimation;
+
+  bool _isLoading = false;
+  List<dynamic> _watchedVideos = [];
+  int? _selectedVideoId;
+  String? _selectedVideoTitle;
+  List<dynamic> _doubts = [];
+  bool _doubtsLoading = false;
+  String? _error;
 
   @override
   void initState() {
@@ -37,6 +48,57 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
       CurvedAnimation(parent: _appBarController, curve: Curves.easeInCubic),
     );
     _appBarController.forward();
+    _loadWatchHistory();
+  }
+
+  Future<void> _loadWatchHistory() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _error = null; });
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final data = await ApiService().getWatchHistory(token: token);
+      if (!mounted) return;
+      final history = data['watch_history'] as List? ?? [];
+      // Deduplicate by video_id
+      final seen = <int>{};
+      final unique = <Map<String, dynamic>>[];
+      for (final item in history) {
+        final vid = item['video_id'] as int?;
+        if (vid != null && seen.add(vid)) {
+          unique.add(item as Map<String, dynamic>);
+        }
+      }
+      setState(() {
+        _watchedVideos = unique;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _isLoading = false; });
+    }
+  }
+
+  Future<void> _loadDoubts(int videoId) async {
+    if (!mounted) return;
+    setState(() { _doubtsLoading = true; _doubts = []; });
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _doubtsLoading = false);
+      return;
+    }
+    try {
+      final data = await ApiService().getTimestamps(token: token, videoId: videoId);
+      if (!mounted) return;
+      setState(() {
+        _doubts = data['timestamps'] as List? ?? [];
+        _doubtsLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _doubtsLoading = false);
+    }
   }
 
   @override
@@ -139,16 +201,123 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
 
                 // Doubts List
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.paddingLarge,
-                      vertical: AppConstants.paddingMedium,
-                    ),
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return _buildDoubtCard(index);
-                    },
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.grey.shade400, size: 48),
+                                  const SizedBox(height: 12),
+                                  Text(_error!, textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.grey.shade600)),
+                                  const SizedBox(height: 12),
+                                  TextButton(onPressed: _loadWatchHistory, child: const Text('Retry')),
+                                ],
+                              ),
+                            )
+                          : _watchedVideos.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.video_library_outlined, color: Colors.grey.shade400, size: 48),
+                                      const SizedBox(height: 12),
+                                      Text('Watch a lecture to ask doubts',
+                                          style: TextStyle(color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    // Video selector
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: AppConstants.paddingLarge, vertical: 8),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.grey.shade200),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.06),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: DropdownButtonHideUnderline(
+                                          child: ButtonTheme(
+                                            alignedDropdown: true,
+                                            child: DropdownButton<int>(
+                                              value: _selectedVideoId,
+                                              isExpanded: true,
+                                              hint: Text('Select a video to view doubts',
+                                                  style: TextStyle(color: Colors.grey.shade500)),
+                                              items: _watchedVideos.map<DropdownMenuItem<int>>((v) {
+                                                final id = v['video_id'] as int;
+                                                final title = v['video_title'] ?? 'Video $id';
+                                                return DropdownMenuItem(
+                                                  value: id,
+                                                  child: Text(title, overflow: TextOverflow.ellipsis),
+                                                );
+                                              }).toList(),
+                                              onChanged: (id) {
+                                                if (id == null) return;
+                                                final video = _watchedVideos.firstWhere(
+                                                    (v) => v['video_id'] == id);
+                                                setState(() {
+                                                  _selectedVideoId = id;
+                                                  _selectedVideoTitle = video['video_title'];
+                                                });
+                                                _loadDoubts(id);
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    if (_selectedVideoId == null)
+                                      Expanded(
+                                        child: Center(
+                                          child: Text('Select a video above to view its doubts',
+                                              style: TextStyle(color: Colors.grey.shade500)),
+                                        ),
+                                      )
+                                    else if (_doubtsLoading)
+                                      const Expanded(
+                                          child: Center(child: CircularProgressIndicator()))
+                                    else if (_doubts.isEmpty)
+                                      Expanded(
+                                        child: Center(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.help_outline, color: Colors.grey.shade400, size: 48),
+                                              const SizedBox(height: 12),
+                                              Text('No doubts for this video yet',
+                                                  style: TextStyle(color: Colors.grey.shade600)),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    else
+                                      Expanded(
+                                        child: ListView.builder(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppConstants.paddingLarge,
+                                            vertical: AppConstants.paddingMedium,
+                                          ),
+                                          itemCount: _doubts.length,
+                                          itemBuilder: (context, index) {
+                                            return _buildDoubtCard(index, _doubts[index]);
+                                          },
+                                        ),
+                                      ),
+                                  ],
+                                ),
                 ),
               ],
             ),
@@ -368,12 +537,15 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
     );
   }
 
-  Widget _buildDoubtCard(int index) {
-    bool isResolved = index % 2 == 0;
+  Widget _buildDoubtCard(int index, Map<String, dynamic> doubt) {
+    final isResolved = doubt['is_resolved'] == true;
     final statusColor = isResolved ? Colors.green : Colors.orange;
     final statusIcon =
         isResolved ? Icons.check_circle_rounded : Icons.schedule_rounded;
     final statusLabel = isResolved ? 'Resolved' : 'Pending';
+    final questionText = doubt['question_text'] ?? 'No question text';
+    final timestamp = doubt['timestamp_value'] ?? '';
+    final commentCount = (doubt['comment_count'] ?? 0).toString();
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -454,7 +626,7 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Doubt ${index + 1}: How to implement this feature?',
+                                questionText,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTextStyles.bodyLarge.copyWith(
@@ -474,7 +646,7 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
-                                      'Advanced Flutter • 45:30',
+                                      _selectedVideoTitle ?? '' + (timestamp.isNotEmpty ? ' • $timestamp' : ''),
                                       style: AppTextStyles.caption.copyWith(
                                         color: Colors.grey.shade600,
                                         fontWeight: FontWeight.w500,
@@ -541,27 +713,11 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
                       ),
                       child: Row(
                         children: [
-                          // Upvotes
-                          Expanded(
-                            child: _buildStatBadge(
-                              icon: Icons.thumb_up_rounded,
-                              label: 'Upvotes',
-                              value: '${12 + index * 2}',
-                              color: const Color(0xFF06B6D4),
-                            ),
-                          ),
-                          Container(
-                            width: 1,
-                            height: 24,
-                            color: Colors.grey.shade300,
-                            margin: const EdgeInsets.symmetric(horizontal: 12),
-                          ),
-                          // Replies
                           Expanded(
                             child: _buildStatBadge(
                               icon: Icons.message_rounded,
                               label: 'Replies',
-                              value: '${3 + index}',
+                              value: commentCount,
                               color: const Color(0xFFF59E0B),
                             ),
                           ),
@@ -571,12 +727,11 @@ class _DoubtsListScreenState extends State<DoubtsListScreen>
                             color: Colors.grey.shade300,
                             margin: const EdgeInsets.symmetric(horizontal: 12),
                           ),
-                          // Time
                           Expanded(
                             child: _buildStatBadge(
                               icon: Icons.access_time_rounded,
-                              label: 'Time',
-                              value: '${2 + index}h',
+                              label: 'At',
+                              value: timestamp.isNotEmpty ? timestamp : 'N/A',
                               color: const Color(0xFF8B5CF6),
                             ),
                           ),

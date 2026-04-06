@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 
@@ -18,6 +21,10 @@ class _CommunityListScreenState extends State<CommunityListScreen>
   late AnimationController _appBarController;
   late Animation<Offset> _appBarSlideAnimation;
   late Animation<double> _appBarFadeAnimation;
+
+  bool _isLoading = false;
+  List<dynamic> _communities = [];
+  String? _error;
 
   @override
   void initState() {
@@ -37,6 +44,60 @@ class _CommunityListScreenState extends State<CommunityListScreen>
       CurvedAnimation(parent: _appBarController, curve: Curves.easeInCubic),
     );
     _appBarController.forward();
+    _loadCommunities();
+  }
+
+  Future<void> _loadCommunities() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _error = null; });
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final data = await ApiService().getCommunities(token: token);
+      if (!mounted) return;
+      setState(() {
+        _communities = data['communities'] as List? ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _isLoading = false; });
+    }
+  }
+
+  Future<void> _joinCommunity(int communityId) async {
+    final token = context.read<AuthProvider>().token;
+    if (token == null) return;
+    try {
+      await ApiService().joinCommunity(token: token, communityId: communityId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('✓ Joined Community successfully!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -141,16 +202,50 @@ class _CommunityListScreenState extends State<CommunityListScreen>
 
                 // Community List
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.paddingLarge,
-                      vertical: AppConstants.paddingMedium,
-                    ),
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return _buildCommunityCard(context, index);
-                    },
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.error_outline,
+                                      color: Colors.grey.shade400, size: 48),
+                                  const SizedBox(height: 12),
+                                  Text(_error!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.grey.shade600)),
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: _loadCommunities,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _communities.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.group_outlined,
+                                          color: Colors.grey.shade400, size: 48),
+                                      const SizedBox(height: 12),
+                                      Text('No communities yet',
+                                          style: TextStyle(color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppConstants.paddingLarge,
+                                    vertical: AppConstants.paddingMedium,
+                                  ),
+                                  itemCount: _communities.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildCommunityCard(context, index, _communities[index]);
+                                  },
+                                ),
                 ),
               ],
             ),
@@ -370,7 +465,7 @@ class _CommunityListScreenState extends State<CommunityListScreen>
     );
   }
 
-  Widget _buildCommunityCard(BuildContext context, int index) {
+  Widget _buildCommunityCard(BuildContext context, int index, Map<String, dynamic> community) {
     final colors = [
       AppColors.primaryColor,
       const Color(0xFF8B5CF6),
@@ -387,6 +482,12 @@ class _CommunityListScreenState extends State<CommunityListScreen>
       Icons.business_rounded,
     ];
     final icon = icons[index % icons.length];
+
+    final name = community['name'] ?? 'Community ${index + 1}';
+    final description = community['description'] ?? 'A community for discussing advanced topics and sharing knowledge together';
+    final memberCount = (community['member_count'] ?? 0).toString();
+    final postCount = (community['post_count'] ?? 0).toString();
+    final communityId = community['id'] as int?;
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -460,7 +561,7 @@ class _CommunityListScreenState extends State<CommunityListScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Community ${index + 1}',
+                                name,
                                 style: AppTextStyles.bodyLarge.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: Colors.black87,
@@ -477,7 +578,7 @@ class _CommunityListScreenState extends State<CommunityListScreen>
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '${156 + index * 10} members',
+                                    '$memberCount members',
                                     style: AppTextStyles.caption.copyWith(
                                       color: Colors.grey.shade600,
                                       fontWeight: FontWeight.w600,
@@ -500,7 +601,7 @@ class _CommunityListScreenState extends State<CommunityListScreen>
 
                     // Description
                     Text(
-                      'A community for discussing advanced topics and sharing knowledge together',
+                      description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySmall.copyWith(
@@ -515,27 +616,24 @@ class _CommunityListScreenState extends State<CommunityListScreen>
                     // Stats Row
                     Row(
                       children: [
-                        // Messages
                         Expanded(
                           child: _buildStatItem(
                             icon: Icons.message_rounded,
                             label: 'Posts',
-                            value: '${42 + index * 5}',
+                            value: postCount,
                             color: const Color(0xFF06B6D4),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Likes
                         Expanded(
                           child: _buildStatItem(
-                            icon: Icons.favorite_rounded,
-                            label: 'Likes',
-                            value: '${180 + index * 20}',
+                            icon: Icons.people_rounded,
+                            label: 'Members',
+                            value: memberCount,
                             color: const Color(0xFFEF4444),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        // Activity
                         Expanded(
                           child: _buildStatItem(
                             icon: Icons.flash_on_rounded,
@@ -571,18 +669,9 @@ class _CommunityListScreenState extends State<CommunityListScreen>
                           color: Colors.transparent,
                           child: InkWell(
                             onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                      '✓ Joined Community successfully!'),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.all(16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              );
+                              if (communityId != null) {
+                                _joinCommunity(communityId);
+                              }
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: Center(
