@@ -470,4 +470,63 @@ class ApiService {
 
   Future<Map<String, dynamic>> adminGetAllFeedback({required String token}) =>
       _get('/feedback/all', token: token);
+
+  // ── CONTRIBUTIONS ─────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getContributions({
+    required String token,
+    int? relatedVideoId,
+    String? search,
+  }) {
+    String path = '/contributions';
+    final params = <String>[];
+    if (relatedVideoId != null) params.add('related_video_id=$relatedVideoId');
+    if (search != null && search.isNotEmpty) params.add('search=$search');
+    if (params.isNotEmpty) path += '?${params.join('&')}';
+    return _get(path, token: token);
+  }
+
+  Future<Map<String, dynamic>> getMyContributions({required String token}) =>
+      _get('/contributions/my', token: token);
+
+  Future<Map<String, dynamic>> uploadContribution({
+    required String token,
+    required String title,
+    required String fileUrl,
+    String? description,
+    String? fileType,
+    int? relatedVideoId,
+  }) =>
+      _post('/contributions', {
+        'title': title,
+        'file_url': fileUrl,
+        if (description != null) 'description': description,
+        if (fileType != null) 'file_type': fileType,
+        if (relatedVideoId != null) 'related_video_id': relatedVideoId,
+      }, token: token);
+
+  Future<Map<String, dynamic>> upvoteContribution({
+    required String token,
+    required int contributionId,
+  }) =>
+      _post('/contributions/$contributionId/upvote', {}, token: token);
+
+  Future<Map<String, dynamic>> deleteContribution({
+    required String token,
+    required int contributionId,
+  }) =>
+      _delete('/contributions/$contributionId', token: token);
+
+  // ── WATCH HISTORY ─────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getWatchHistory({required String token}) =>
+      _get('/videos/watch-history/me', token: token);
+
+  Future<Map<String, dynamic>> updateWatchProgress({
+    required String token,
+    required int videoId,
+    required int lastWatchTime,
+  }) =>
+      _put('/videos/$videoId/watch-progress', {'last_watch_time': lastWatchTime},
+          token: token);
 }

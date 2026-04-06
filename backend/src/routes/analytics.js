@@ -104,10 +104,13 @@ router.get('/student', authenticateToken, async (req, res) => {
 
         // Quiz performance
         const quizResult = await pool.query(
-            `SELECT AVG(score) as average_score, COUNT(*) as total_attempts
+            `SELECT COALESCE(AVG(score), 0) as average_score, COUNT(*) as total_attempts
              FROM quiz_submissions WHERE student_id = $1`,
             [userId]
-        );
+        ).catch((err) => {
+            console.warn('[analytics] quiz_submissions query failed (table may not exist):', err.message);
+            return { rows: [{ average_score: 0, total_attempts: 0 }] };
+        });
 
         // Recent activity
         const activityResult = await pool.query(
@@ -115,12 +118,7 @@ router.get('/student', authenticateToken, async (req, res) => {
              FROM student_watch_history w
              JOIN videos v ON w.video_id = v.id
              WHERE w.user_id = $1
-             UNION ALL
-             SELECT 'submitted_quiz', q.title, qs.submitted_at
-             FROM quiz_submissions qs
-             JOIN quizzes q ON qs.quiz_id = q.id
-             WHERE qs.student_id = $1
-             ORDER BY timestamp DESC LIMIT 10`,
+             ORDER BY w.watched_at DESC LIMIT 10`,
             [userId]
         );
 
@@ -255,7 +253,7 @@ router.get('/admin/platform', authenticateToken, async (req, res) => {
         );
 
         const coursesResult = await pool.query(
-            `SELECT COUNT(*) as total_courses, SUM(students_enrolled) as total_enrollments
+            `SELECT COUNT(*) as total_courses
              FROM courses`
         );
 

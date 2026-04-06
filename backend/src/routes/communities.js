@@ -327,4 +327,54 @@ router.delete('/:communityId/posts/:postId', async (req, res) => {
     }
 });
 
+// ── DELETE /api/communities/:id/members/:userId  – remove a member ───────────
+router.delete('/:communityId/members/:targetUserId', async (req, res) => {
+    try {
+        const { communityId, targetUserId } = req.params;
+        const userId = req.user.id;
+
+        // Requester must be owner/moderator or admin
+        const requesterRole = await pool.query(
+            `SELECT role FROM community_members WHERE community_id = $1 AND user_id = $2`,
+            [communityId, userId]
+        );
+
+        const isAdmin = req.user.role === 'admin';
+        const isMod = requesterRole.rows.length > 0 &&
+            ['owner', 'moderator'].includes(requesterRole.rows[0].role);
+
+        if (!isMod && !isAdmin) {
+            return res.status(403).json({ message: 'Only owner, moderator or admin can remove members' });
+        }
+
+        // Cannot remove owner
+        const targetRole = await pool.query(
+            `SELECT role FROM community_members WHERE community_id = $1 AND user_id = $2`,
+            [communityId, targetUserId]
+        );
+
+        if (targetRole.rows.length === 0) {
+            return res.status(404).json({ message: 'User is not a member of this community' });
+        }
+
+        if (targetRole.rows[0].role === 'owner') {
+            return res.status(400).json({ message: 'Cannot remove the community owner' });
+        }
+
+        await pool.query(
+            'DELETE FROM community_members WHERE community_id = $1 AND user_id = $2',
+            [communityId, targetUserId]
+        );
+        await pool.query(
+            'UPDATE communities SET member_count = GREATEST(member_count - 1, 0) WHERE id = $1',
+            [communityId]
+        );
+
+        res.json({ message: 'Member removed successfully' });
+    } catch (error) {
+        console.error('Error removing member:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 module.exports = router;

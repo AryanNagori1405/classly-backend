@@ -37,7 +37,8 @@ async function validateVideoOwnership(videoId, userId) {
 // POST /api/videos - Teacher uploads video
 router.post('/', authenticateToken, async (req, res) => {
     try {
-        const { title, description, file_url, thumbnail_url, duration, course_id } = req.body;
+        const { title, description, file_url, thumbnail_url, duration,
+                subject, subject_category, department, course_id } = req.body;
         const teacherId = req.user.id;
 
         // Validate required fields
@@ -45,26 +46,32 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'Title and file_url are required' });
         }
 
-        // Check if course exists and videos are enabled
-        const courseResult = await pool.query(
-            'SELECT * FROM courses WHERE id = $1 AND created_by = $2',
-            [course_id, teacherId]
-        );
-
-        if (courseResult.rows.length === 0) {
-            return res.status(403).json({ message: 'Course not found or you are not the creator' });
-        }
-
-        if (!courseResult.rows[0].enable_videos) {
-            return res.status(400).json({ message: 'Videos are not enabled for this course' });
+        // If course_id provided, validate it belongs to this teacher and has videos enabled
+        let resolvedCourseId = course_id || null;
+        if (course_id) {
+            const courseResult = await pool.query(
+                'SELECT id, enable_videos FROM courses WHERE id = $1 AND created_by = $2',
+                [course_id, teacherId]
+            );
+            if (courseResult.rows.length === 0) {
+                return res.status(403).json({ message: 'Course not found or you are not the creator' });
+            }
+            if (!courseResult.rows[0].enable_videos) {
+                return res.status(400).json({ message: 'Videos are not enabled for this course' });
+            }
         }
 
         // Insert video
         const result = await pool.query(
-            `INSERT INTO videos (teacher_id, course_id, title, description, file_url, thumbnail_url, duration, is_public, is_deleted, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `INSERT INTO videos (teacher_id, course_id, title, description, file_url,
+                thumbnail_url, duration, subject, subject_category, department,
+                is_public, is_deleted, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+                     CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [teacherId, course_id, title, description, file_url, thumbnail_url, duration, true, false]
+            [teacherId, resolvedCourseId, title, description, file_url,
+             thumbnail_url, duration || null, subject || null,
+             subject_category || null, department || null, true, false]
         );
 
         // Log video upload
@@ -390,6 +397,95 @@ router.get('/:videoId/audit-log', authenticateToken, async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching audit log:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// DELETE /api/videos/:videoId - Soft-delete a video (teacher only)
+router.delete('/:videoId', authenticateToken, async (req, res) => {
+    try {
+        const { videoId } = req.params;
+        const userId = req.user.id;
+
+        const videoResult = await pool.query(
+            'SELECT * FROM videos WHERE id = $1 AND is_deleted = FALSE',
+            [videoId]
+        );
+        if (videoResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Video not found' });
+        }
+
+        const video = videoResult.rows[0];
+        const isOwner = video.teacher_id === userId;
+        const isAdmin = req.user.role === 'admin';
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ message: 'You can only delete your own videos' });
+        }
+
+        await pool.query(
+            `UPDATE videos SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP,
+             updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [videoId]
+        );
+
+        await pool.query(
+            `INSERT INTO video_audit_log (video_id, action, description, created_at)
+             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
+            [videoId, 'deleted', `Video deleted by user ${userId}`]
+        );
+
+        res.json({ message: 'Video deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting video:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// PUT /api/videos/:videoId/watch-progress - Update watch position (resume support)
+router.put('/:videoId/watch-progress', authenticateToken, async (req, res) => {
+    try {
+        const { videoId } = req.params;
+        const { last_watch_time } = req.body;
+        const userId = req.user.id;
+
+        if (last_watch_time === undefined || last_watch_time === null) {
+            return res.status(400).json({ message: 'last_watch_time is required' });
+        }
+
+        await pool.query(
+            `INSERT INTO student_watch_history (user_id, video_id, last_watch_time, watched_at)
+             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+             ON CONFLICT (user_id, video_id)
+             DO UPDATE SET last_watch_time = $3, watched_at = CURRENT_TIMESTAMP`,
+            [userId, videoId, last_watch_time]
+        );
+
+        res.json({ message: 'Watch progress saved' });
+    } catch (error) {
+        console.error('Error saving watch progress:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// GET /api/videos/watch-history/me - Get current user's watch history
+router.get('/watch-history/me', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const result = await pool.query(
+            `SELECT swh.*, v.title, v.thumbnail_url, v.duration, v.expires_at,
+                    u.name as teacher_name
+             FROM student_watch_history swh
+             JOIN videos v ON swh.video_id = v.id
+             JOIN users u ON v.teacher_id = u.id
+             WHERE swh.user_id = $1 AND v.is_deleted = FALSE
+             ORDER BY swh.watched_at DESC`,
+            [userId]
+        );
+
+        res.json({ count: result.rows.length, history: result.rows });
+    } catch (error) {
+        console.error('Error fetching watch history:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
