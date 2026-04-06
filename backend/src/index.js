@@ -21,6 +21,7 @@ const { startCleanupSchedule } = require('./jobs/videoCleanupJob');
 const analyticsRoutes = require('./routes/analytics');
 const adminRoutes = require('./routes/admin');
 const notificationsRoutes = require('./routes/notifications');
+const contributionsRoutes = require('./routes/contributions');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -117,6 +118,7 @@ app.use('/api/users',         usersRoutes);
 app.use('/api/analytics',     analyticsRoutes);
 app.use('/api/admin',         adminRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/contributions', contributionsRoutes);
 
 // ── Error handler ─────────────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars
