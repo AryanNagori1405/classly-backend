@@ -173,7 +173,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                             ),
                             title: Text(u['name'] as String? ?? 'User'),
                             subtitle: Text(
-                                '${u['role'] as String? ?? ''} • ${u['uid'] ?? u['reg_id'] ?? ''}'),
+                                '${u['role'] as String? ?? ''} • ${u['reg_no'] ?? ''}'),
                             trailing: Switch(
                               value: isActive,
                               activeColor: Colors.green,
@@ -268,7 +268,7 @@ class _FeedbackAdminCard extends StatelessWidget {
                     ),
                     Text(
                       'From: ${feedback['sender_name'] as String? ?? '—'} '
-                      '(${feedback['sender_uid'] ?? feedback['sender_reg_id'] ?? ''})',
+                      '(${feedback['sender_reg_no'] ?? ''})',
                       style: const TextStyle(
                           fontSize: 12,
                           color: Colors.deepOrange,

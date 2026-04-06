@@ -23,8 +23,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _bioController;
-  late TextEditingController _departmentController;
-  late TextEditingController _semesterController;
 
   bool _isLoading = false;
   bool _isEditing = false;
@@ -53,8 +51,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _bioController = TextEditingController(text: user?.bio ?? '');
-    _departmentController = TextEditingController(text: user?.department ?? '');
-    _semesterController = TextEditingController(text: user?.semester ?? '');
   }
 
   @override
@@ -63,8 +59,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _nameController.dispose();
     _emailController.dispose();
     _bioController.dispose();
-    _departmentController.dispose();
-    _semesterController.dispose();
     super.dispose();
   }
 
@@ -86,13 +80,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final authProvider = context.read<AuthProvider>();
     if (authProvider.user != null) {
       final updatedUser = User(
-        uid: authProvider.user!.uid,
-        regId: authProvider.user!.regId,
+        regNo: authProvider.user!.regNo,
         name: _nameController.text,
         email: _emailController.text,
+        phone: authProvider.user!.phone,
         role: authProvider.user!.role,
-        department: _departmentController.text,
-        semester: _semesterController.text,
         profileImage: authProvider.user!.profileImage,
         bio: _bioController.text,
         createdAt: authProvider.user!.createdAt,
@@ -127,8 +119,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _nameController.text = user?.name ?? '';
     _emailController.text = user?.email ?? '';
     _bioController.text = user?.bio ?? '';
-    _departmentController.text = user?.department ?? '';
-    _semesterController.text = user?.semester ?? '';
     setState(() => _isEditing = false);
   }
 
@@ -268,26 +258,6 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                     }
                                     return null;
                                   },
-                                ),
-
-                                const SizedBox(height: 16),
-
-                                // Department Field
-                                _buildEditableField(
-                                  label: 'Department',
-                                  controller: _departmentController,
-                                  icon: Icons.business_rounded,
-                                  enabled: false, // Department is not editable
-                                ),
-
-                                const SizedBox(height: 16),
-
-                                // Semester Field
-                                _buildEditableField(
-                                  label: 'Semester',
-                                  controller: _semesterController,
-                                  icon: Icons.school_rounded,
-                                  enabled: false, // Semester is not editable
                                 ),
 
                                 const SizedBox(

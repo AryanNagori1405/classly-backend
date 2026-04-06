@@ -10,32 +10,27 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =====================================================================
 -- USERS TABLE
--- Authentication via UID or Registration ID + OTP (no password)
+-- Authentication via Registration Number + Password
 -- =====================================================================
 CREATE TABLE IF NOT EXISTS users (
     id                  SERIAL PRIMARY KEY,
-    uid                 VARCHAR(100) UNIQUE,
-    reg_id              VARCHAR(100) UNIQUE,
+    reg_no              VARCHAR(100) UNIQUE NOT NULL,
     name                VARCHAR(255) NOT NULL,
-    email               VARCHAR(255),
-    phone               VARCHAR(30),
+    email               VARCHAR(255) UNIQUE NOT NULL,
+    phone               VARCHAR(20)  NOT NULL,
     role                VARCHAR(20)  NOT NULL DEFAULT 'student'
                             CHECK (role IN ('student', 'teacher', 'admin')),
-    department          VARCHAR(255),
-    semester            VARCHAR(20),
+    password_hash       VARCHAR(255),
     profile_image       TEXT,
     bio                 TEXT,
     is_verified         BOOLEAN      NOT NULL DEFAULT FALSE,
     is_active           BOOLEAN      NOT NULL DEFAULT TRUE,
-    otp_code            VARCHAR(10),
-    otp_expires_at      TIMESTAMP,
-    otp_attempts        INTEGER      NOT NULL DEFAULT 0,
     created_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_uid    ON users (uid);
-CREATE INDEX IF NOT EXISTS idx_users_reg_id ON users (reg_id);
+CREATE INDEX IF NOT EXISTS idx_users_reg_no ON users (reg_no);
+CREATE INDEX IF NOT EXISTS idx_users_email  ON users (email);
 CREATE INDEX IF NOT EXISTS idx_users_role   ON users (role);
 
 -- =====================================================================
@@ -342,8 +337,8 @@ CREATE TABLE IF NOT EXISTS admin_actions_log (
 );
 
 -- =====================================================================
--- SEED: Default admin user (change password / OTP flow on first login)
+-- SEED: Default admin user (password: Admin@123)
 -- =====================================================================
-INSERT INTO users (uid, reg_id, name, role, is_verified, is_active)
-VALUES ('ADMIN001', 'ADMIN-REG-001', 'Admin', 'admin', TRUE, TRUE)
-ON CONFLICT (uid) DO NOTHING;
+INSERT INTO users (reg_no, name, email, phone, role, password_hash, is_verified, is_active)
+VALUES ('ADMIN001', 'System Admin', 'admin@college.edu', '9000000001', 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36MM4oimu', TRUE, TRUE)
+ON CONFLICT (reg_no) DO NOTHING;

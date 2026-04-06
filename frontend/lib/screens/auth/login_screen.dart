@@ -5,7 +5,9 @@ import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
-import 'uid_login_screen.dart';
+import '../home/student_home.dart';
+import '../home/teacher_home.dart';
+import '../home/admin_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final String selectedRole;
@@ -93,16 +95,22 @@ class _LoginScreenState extends State<LoginScreen>
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
 
-      // Use UID/OTP based auth
-      final uid = _regNumberController.text.trim();
-      final success = await authProvider.verifyUID(uid: uid);
+      final regNo = _regNumberController.text.trim();
+      final password = _passwordController.text;
+      final success = await authProvider.login(regNo: regNo, password: password);
 
       if (mounted) {
         if (success) {
-          Navigator.of(context).push(
+          final role = authProvider.user?.role ?? 'student';
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
-              builder: (_) => const OTPVerificationScreen(),
+              builder: (_) => role == 'admin'
+                  ? const AdminHomeScreen()
+                  : role == 'teacher'
+                      ? const TeacherHomeScreen()
+                      : const StudentHomeScreen(),
             ),
+            (route) => false,
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
