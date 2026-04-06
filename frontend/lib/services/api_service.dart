@@ -268,7 +268,6 @@ class ApiService {
     } on SocketException catch (e) {
       throw _mapError(e);
     }
-    }
   }
 
   Future<Map<String, dynamic>> addComment({
@@ -458,7 +457,6 @@ class ApiService {
       throw _mapError(e);
     } on SocketException catch (e) {
       throw _mapError(e);
-    }
     }
   }
 

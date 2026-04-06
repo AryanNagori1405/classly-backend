@@ -4,10 +4,14 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 import '../video/upload_lecture_screen.dart';
+import '../video/video_list_screen.dart';
 import '../profile/profile_screen.dart';
+import '../teacher/student_doubts_screen.dart';
+import '../teacher/feedback_dashboard_screen.dart';
 
 class TeacherHomeScreen extends StatefulWidget {
   const TeacherHomeScreen({Key? key}) : super(key: key);
@@ -160,6 +164,9 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
   late Animation<Offset> _headerSlideAnimation;
   late Animation<double> _headerFadeAnimation;
 
+  Map<String, dynamic>? _analytics;
+  bool _analyticsLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -176,6 +183,34 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
       CurvedAnimation(parent: _headerController, curve: Curves.easeInCubic),
     );
     _headerController.forward();
+    _loadAnalytics();
+  }
+
+  Future<void> _loadAnalytics() async {
+    if (!mounted) return;
+    setState(() => _analyticsLoading = true);
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _analyticsLoading = false);
+      return;
+    }
+    try {
+      final data = await ApiService().getTeacherAnalytics(token: token);
+      if (!mounted) return;
+      setState(() {
+        _analytics = data;
+        _analyticsLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _analyticsLoading = false);
+    }
+  }
+
+  String _formatViews(dynamic views) {
+    if (views == null) return '0';
+    final n = views is int ? views : int.tryParse(views.toString()) ?? 0;
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return n.toString();
   }
 
   @override
@@ -227,21 +262,21 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       children: [
                         _buildStatCard(
                           label: 'Videos\nUploaded',
-                          value: '12',
+                          value: _analytics?['summary']?['total_videos']?.toString() ?? '0',
                           icon: Icons.cloud_upload_outlined,
                           color: AppColors.primaryColor,
                           delay: 0,
                         ),
                         _buildStatCard(
                           label: 'Total\nViews',
-                          value: '2.4K',
+                          value: _formatViews(_analytics?['summary']?['total_views']),
                           icon: Icons.visibility_outlined,
                           color: const Color(0xFF06B6D4),
                           delay: 100,
                         ),
                         _buildStatCard(
                           label: 'Students\nEnrolled',
-                          value: '156',
+                          value: _analytics?['summary']?['total_students']?.toString() ?? '0',
                           icon: Icons.people_outlined,
                           color: const Color(0xFF8B5CF6),
                           delay: 200,
@@ -265,7 +300,14 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       children: [
                         _buildSectionTitle('Recent Uploads'),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const VideoListScreen(),
+                              ),
+                            );
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -293,23 +335,7 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                   ),
                   const SizedBox(height: AppConstants.paddingMedium),
                   FadeAnimation(
-                    child: _buildRecentUploadCard(
-                      title: 'Flutter Advanced Patterns',
-                      date: 'Today',
-                      views: '245',
-                      students: '156',
-                      thumbnail: Icons.flutter_dash,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FadeAnimation(
-                    child: _buildRecentUploadCard(
-                      title: 'Database Design Basics',
-                      date: 'Yesterday',
-                      views: '189',
-                      students: '123',
-                      thumbnail: Icons.storage,
-                    ),
+                    child: _buildRecentUploadsSection(),
                   ),
                   const SizedBox(height: AppConstants.paddingXLarge),
 
@@ -324,7 +350,14 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       label: 'Upload New Lecture',
                       description: 'Add a new lecture video',
                       color: AppColors.primaryColor,
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const UploadLectureScreen(),
+                          ),
+                        );
+                      },
                       delay: 0,
                     ),
                   ),
@@ -335,7 +368,7 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       label: 'View Analytics',
                       description: 'See student engagement',
                       color: const Color(0xFF8B5CF6),
-                      onTap: () {},
+                      onTap: () => _showAnalyticsDialog(context),
                       delay: 100,
                     ),
                   ),
@@ -346,8 +379,33 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       label: 'Resolve Doubts',
                       description: 'Answer student questions',
                       color: const Color(0xFFF59E0B),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StudentDoubtsScreen(),
+                          ),
+                        );
+                      },
                       delay: 200,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FadeAnimation(
+                    child: _buildActionButton(
+                      icon: Icons.feedback_outlined,
+                      label: 'Feedback Dashboard',
+                      description: 'View anonymous feedback',
+                      color: const Color(0xFF06B6D4),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FeedbackDashboardScreen(),
+                          ),
+                        );
+                      },
+                      delay: 300,
                     ),
                   ),
                   const SizedBox(height: AppConstants.paddingLarge),
@@ -511,6 +569,95 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
         fontWeight: FontWeight.w800,
         letterSpacing: 0.3,
       ),
+    );
+  }
+
+  Widget _buildRecentUploadsSection() {
+    if (_analyticsLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    final recentVideos = _analytics?['recent_videos'] as List? ?? [];
+    if (recentVideos.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.video_library_outlined, color: Colors.grey.shade400),
+            const SizedBox(width: 12),
+            Text(
+              'No lectures uploaded yet',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: recentVideos.take(3).map<Widget>((video) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildRecentUploadCard(
+            title: video['title'] ?? 'Untitled',
+            date: video['created_at'] ?? '',
+            views: (video['view_count'] ?? 0).toString(),
+            students: (video['unique_viewers'] ?? 0).toString(),
+            thumbnail: Icons.play_circle_outline,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showAnalyticsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Analytics Overview'),
+        content: _analyticsLoading
+            ? const SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _dialogStat('Total Videos', _analytics?['summary']?['total_videos']?.toString() ?? '0'),
+                  const SizedBox(height: 8),
+                  _dialogStat('Total Views', _formatViews(_analytics?['summary']?['total_views'])),
+                  const SizedBox(height: 8),
+                  _dialogStat('Total Students', _analytics?['summary']?['total_students']?.toString() ?? '0'),
+                  const SizedBox(height: 8),
+                  _dialogStat('Total Upvotes', _analytics?['summary']?['total_upvotes']?.toString() ?? '0'),
+                ],
+              ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dialogStat(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.black54)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+      ],
     );
   }
 

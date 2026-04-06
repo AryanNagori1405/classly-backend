@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 
@@ -1431,60 +1434,103 @@ class _UploadLectureScreenState extends State<UploadLectureScreen>
     );
   }
 
-  void _publishLecture() {
+  Future<void> _publishLecture() async {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a lecture title')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(seconds: 2), () {
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.green,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Lecture published successfully!',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+          const SnackBar(content: Text('Session expired. Please log in again.')),
         );
-        // Reset form
-        setState(() {
-          _currentStep = 0;
-          _selectedVideo = '';
-          _selectedNotes = '';
-          _selectedSchedule = '';
-          _titleController.clear();
-          _descriptionController.clear();
-          _subjectController.clear();
-          _categoryController.clear();
-        });
       }
-    });
+      return;
+    }
+
+    try {
+      await ApiService().uploadLecture(token: token, data: {
+        'title': title,
+        if (_descriptionController.text.trim().isNotEmpty)
+          'description': _descriptionController.text.trim(),
+        if (_subjectController.text.trim().isNotEmpty)
+          'subject': _subjectController.text.trim(),
+        if (_categoryController.text.trim().isNotEmpty)
+          'category': _categoryController.text.trim(),
+        if (_selectedVideo.isNotEmpty) 'file_url': _selectedVideo,
+      });
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.check_rounded,
+                  color: Colors.green,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Lecture published successfully!',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      // Reset form
+      setState(() {
+        _currentStep = 0;
+        _selectedVideo = '';
+        _selectedNotes = '';
+        _selectedSchedule = '';
+        _titleController.clear();
+        _descriptionController.clear();
+        _subjectController.clear();
+        _categoryController.clear();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: $e'),
+          backgroundColor: AppColors.errorColor,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 }
