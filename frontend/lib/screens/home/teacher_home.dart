@@ -8,6 +8,7 @@ import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 import '../video/upload_lecture_screen.dart';
+import '../video/video_list_screen.dart';
 import '../profile/profile_screen.dart';
 import '../teacher/student_doubts_screen.dart';
 import '../teacher/feedback_dashboard_screen.dart';
@@ -299,7 +300,14 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                       children: [
                         _buildSectionTitle('Recent Uploads'),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const VideoListScreen(),
+                              ),
+                            );
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
@@ -380,6 +388,24 @@ class _TeacherDashboardTabState extends State<TeacherDashboardTab>
                         );
                       },
                       delay: 200,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FadeAnimation(
+                    child: _buildActionButton(
+                      icon: Icons.feedback_outlined,
+                      label: 'Feedback Dashboard',
+                      description: 'View anonymous feedback',
+                      color: const Color(0xFF06B6D4),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FeedbackDashboardScreen(),
+                          ),
+                        );
+                      },
+                      delay: 300,
                     ),
                   ),
                   const SizedBox(height: AppConstants.paddingLarge),
