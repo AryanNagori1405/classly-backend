@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 
@@ -19,6 +22,10 @@ class _VideoListScreenState extends State<VideoListScreen>
   late Animation<Offset> _appBarSlideAnimation;
   late Animation<double> _appBarFadeAnimation;
 
+  bool _isLoading = false;
+  List<dynamic> _videos = [];
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +43,27 @@ class _VideoListScreenState extends State<VideoListScreen>
       CurvedAnimation(parent: _appBarController, curve: Curves.easeInCubic),
     );
     _appBarController.forward();
+    _loadVideos();
+  }
+
+  Future<void> _loadVideos() async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; _error = null; });
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _isLoading = false);
+      return;
+    }
+    try {
+      final data = await ApiService().getVideos(token: token);
+      if (!mounted) return;
+      setState(() {
+        _videos = data['videos'] as List? ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _isLoading = false; });
+    }
   }
 
   @override
@@ -140,16 +168,50 @@ class _VideoListScreenState extends State<VideoListScreen>
 
                 // Video List
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.paddingLarge,
-                      vertical: AppConstants.paddingMedium,
-                    ),
-                    itemCount: 10,
-                    itemBuilder: (context, index) {
-                      return _buildVideoItem(index);
-                    },
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _error != null
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.error_outline,
+                                      color: Colors.grey.shade400, size: 48),
+                                  const SizedBox(height: 12),
+                                  Text(_error!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.grey.shade600)),
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: _loadVideos,
+                                    child: const Text('Retry'),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : _videos.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.video_library_outlined,
+                                          color: Colors.grey.shade400, size: 48),
+                                      const SizedBox(height: 12),
+                                      Text('No lectures available yet',
+                                          style: TextStyle(color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: AppConstants.paddingLarge,
+                                    vertical: AppConstants.paddingMedium,
+                                  ),
+                                  itemCount: _videos.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildVideoItem(index, _videos[index]);
+                                  },
+                                ),
                 ),
               ],
             ),
@@ -327,7 +389,15 @@ class _VideoListScreenState extends State<VideoListScreen>
     );
   }
 
-  Widget _buildVideoItem(int index) {
+  Widget _buildVideoItem(int index, Map<String, dynamic> video) {
+    final title = video['title'] ?? 'Untitled';
+    final teacherName = video['teacher_name'] ?? 'Unknown';
+    final subject = video['subject'] ?? 'General';
+    final viewCount = (video['view_count'] ?? 0).toString();
+    final upvoteCount = (video['upvote_count'] ?? 0).toString();
+    final downloadCount = (video['download_count'] ?? 0).toString();
+    final daysLeft = video['days_remaining'] as int?;
+
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: Duration(milliseconds: 800 + (index * 100)),
@@ -417,84 +487,51 @@ class _VideoListScreenState extends State<VideoListScreen>
                         ),
                       ),
 
-                      // Duration Badge
-                      Positioned(
-                        bottom: 12,
-                        right: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.schedule_rounded,
-                                size: 12,
-                                color: Colors.white,
+                      // Expiry Badge (only if days_remaining available)
+                      if (daysLeft != null)
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFF59E0B),
+                                  const Color(0xFFF59E0B).withOpacity(0.7),
+                                ],
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '45:30',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                                  blurRadius: 8,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      // Expiry Badge
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFFF59E0B),
-                                const Color(0xFFF59E0B).withOpacity(0.7),
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFF59E0B).withOpacity(0.3),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.timer_rounded,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${2 + index % 3} days',
-                                style: AppTextStyles.caption.copyWith(
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.timer_rounded,
+                                  size: 12,
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$daysLeft day${daysLeft != 1 ? 's' : ''}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
 
@@ -506,7 +543,7 @@ class _VideoListScreenState extends State<VideoListScreen>
                       children: [
                         // Title
                         Text(
-                          'Lecture ${index + 1}: Advanced Topics in ${['Flutter', 'Firebase', 'Dart', 'Backend'][index % 4]}',
+                          title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodyLarge.copyWith(
@@ -549,7 +586,7 @@ class _VideoListScreenState extends State<VideoListScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Prof. ${['Smith', 'Johnson', 'Williams', 'Brown'][index % 4]}',
+                                    teacherName,
                                     style: AppTextStyles.caption.copyWith(
                                       color: Colors.black87,
                                       fontWeight: FontWeight.w700,
@@ -557,7 +594,7 @@ class _VideoListScreenState extends State<VideoListScreen>
                                     ),
                                   ),
                                   Text(
-                                    'Computer Science',
+                                    subject,
                                     style: AppTextStyles.caption.copyWith(
                                       color: Colors.grey.shade600,
                                       fontSize: 11,
@@ -574,28 +611,25 @@ class _VideoListScreenState extends State<VideoListScreen>
                         // Stats Row
                         Row(
                           children: [
-                            // Rating
                             _buildStatBadge(
-                              icon: Icons.star_rounded,
-                              label: '4.8',
+                              icon: Icons.thumb_up_rounded,
+                              label: upvoteCount,
                               color: const Color(0xFFFCD34D),
                             ),
 
                             const SizedBox(width: 10),
 
-                            // Views
                             _buildStatBadge(
                               icon: Icons.visibility_rounded,
-                              label: '${1200 + (index * 100)} views',
+                              label: '$viewCount views',
                               color: const Color(0xFF06B6D4),
                             ),
 
                             const SizedBox(width: 10),
 
-                            // Downloads
                             _buildStatBadge(
                               icon: Icons.download_rounded,
-                              label: '${342 + (index * 50)}',
+                              label: downloadCount,
                               color: const Color(0xFF10B981),
                             ),
                           ],

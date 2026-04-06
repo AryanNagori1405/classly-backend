@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
 import '../../widgets/animations/fade_animation.dart';
 import '../../widgets/animations/slide_animation.dart';
 import '../video/video_list_screen.dart';
@@ -177,6 +178,13 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
   late Animation<Offset> _headerSlideAnimation;
   late Animation<double> _headerFadeAnimation;
 
+  int _videosWatched = 0;
+  int _doubtsAsked = 0;
+  int _communitiesJoined = 0;
+  int _downloaded = 0;
+  List<dynamic> _expiringVideos = [];
+  bool _statsLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -193,6 +201,36 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
       CurvedAnimation(parent: _headerController, curve: Curves.easeInCubic),
     );
     _headerController.forward();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    if (!mounted) return;
+    setState(() => _statsLoading = true);
+    final token = context.read<AuthProvider>().token;
+    if (token == null) {
+      if (mounted) setState(() => _statsLoading = false);
+      return;
+    }
+    try {
+      final results = await Future.wait([
+        ApiService().getWatchHistory(token: token),
+        ApiService().getExpiringVideos(token: token),
+      ]);
+      if (!mounted) return;
+      final historyData = results[0];
+      final expiringData = results[1];
+      final history = historyData['watch_history'] as List? ?? [];
+      final uniqueIds = history.map((e) => e['video_id']).toSet();
+      final expiring = expiringData['videos'] as List? ?? [];
+      setState(() {
+        _videosWatched = uniqueIds.length;
+        _expiringVideos = expiring;
+        _statsLoading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _statsLoading = false);
+    }
   }
 
   @override
@@ -233,23 +271,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                   ),
                   const SizedBox(height: AppConstants.paddingMedium),
                   FadeAnimation(
-                    child: _buildExpiringVideoCard(
-                      title: 'Advanced Flutter Patterns',
-                      teacher: 'Prof. Aryan',
-                      daysRemaining: 2,
-                      subject: 'Mobile Development',
-                      thumbnail: Icons.flutter_dash,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FadeAnimation(
-                    child: _buildExpiringVideoCard(
-                      title: 'Database Design Basics',
-                      teacher: 'Prof. Smith',
-                      daysRemaining: 1,
-                      subject: 'Database',
-                      thumbnail: Icons.storage,
-                    ),
+                    child: _buildExpiringVideosSection(),
                   ),
                   const SizedBox(height: AppConstants.paddingXLarge),
 
@@ -271,21 +293,42 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                           icon: Icons.play_circle_outline,
                           label: 'Watch Lectures',
                           color: AppColors.primaryColor,
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const VideoListScreen(),
+                              ),
+                            );
+                          },
                           delay: 0,
                         ),
                         _buildQuickActionCard(
                           icon: Icons.groups_outlined,
                           label: 'Join Community',
                           color: const Color(0xFF8B5CF6),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CommunityListScreen(),
+                              ),
+                            );
+                          },
                           delay: 100,
                         ),
                         _buildQuickActionCard(
                           icon: Icons.help_outline,
                           label: 'Ask Doubts',
                           color: const Color(0xFFF59E0B),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DoubtsListScreen(),
+                              ),
+                            );
+                          },
                           delay: 200,
                         ),
                         _buildQuickActionCard(
@@ -319,7 +362,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                         Expanded(
                           child: _buildStatCard(
                             label: 'Videos\nWatched',
-                            value: '24',
+                            value: _videosWatched.toString(),
                             icon: Icons.play_circle_outline,
                             color: AppColors.primaryColor,
                             delay: 0,
@@ -329,7 +372,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                         Expanded(
                           child: _buildStatCard(
                             label: 'Doubts\nAsked',
-                            value: '8',
+                            value: _doubtsAsked.toString(),
                             icon: Icons.help_outline,
                             color: const Color(0xFFF59E0B),
                             delay: 100,
@@ -345,7 +388,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                         Expanded(
                           child: _buildStatCard(
                             label: 'Communities',
-                            value: '5',
+                            value: _communitiesJoined.toString(),
                             icon: Icons.groups_outlined,
                             color: const Color(0xFF8B5CF6),
                             delay: 200,
@@ -355,7 +398,7 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
                         Expanded(
                           child: _buildStatCard(
                             label: 'Downloaded',
-                            value: '12',
+                            value: _downloaded.toString(),
                             icon: Icons.download_outlined,
                             color: const Color(0xFF10B981),
                             delay: 300,
@@ -513,6 +556,49 @@ class _StudentDashboardTabState extends State<StudentDashboardTab>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildExpiringVideosSection() {
+    if (_statsLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_expiringVideos.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.green.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.check_circle_outline, color: Colors.green),
+            SizedBox(width: 12),
+            Text('No videos expiring soon 🎉'),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: _expiringVideos.take(3).map((video) {
+        final daysRemaining = video['days_remaining'] as int? ?? 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildExpiringVideoCard(
+            title: video['title'] ?? 'Unknown',
+            teacher: video['teacher_name'] ?? 'Unknown',
+            daysRemaining: daysRemaining,
+            subject: video['subject'] ?? '',
+            thumbnail: Icons.play_circle_outline,
+          ),
+        );
+      }).toList(),
     );
   }
 
