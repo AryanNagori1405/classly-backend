@@ -152,7 +152,7 @@ class _BookmarkCard extends StatelessWidget {
     final expiresAt =
         DateTime.tryParse(bookmark['expires_at'] as String? ?? '');
     final daysLeft =
-        expiresAt != null ? expiresAt.difference(DateTime.now()).inDays : null;
+        expiresAt?.difference(DateTime.now()).inDays;
 
     return GestureDetector(
       onTap: onTap,
@@ -179,7 +179,7 @@ class _BookmarkCard extends StatelessWidget {
                 width: 80,
                 height: 60,
                 color: AppColors.primaryColor.withOpacity(0.1),
-                child: Icon(Icons.play_circle_fill_rounded,
+                child: const Icon(Icons.play_circle_fill_rounded,
                     color: AppColors.primaryColor, size: 36),
               ),
             ),

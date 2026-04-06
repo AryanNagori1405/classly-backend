@@ -276,7 +276,6 @@ class ApiService {
     } on SocketException catch (e) {
       throw _mapError(e);
     }
-    }
   }
 
   Future<Map<String, dynamic>> addComment({
@@ -327,7 +326,7 @@ class ApiService {
       _get(
         '/communities'
         '${search != null ? '?search=${Uri.encodeComponent(search)}' : ''}'
-        '${category != null ? (search != null ? '&' : '?') + 'category=$category' : ''}',
+        '${category != null ? '${search != null ? '&' : '?'}category=$category' : ''}',
         token: token,
       );
 
@@ -466,7 +465,6 @@ class ApiService {
       throw _mapError(e);
     } on SocketException catch (e) {
       throw _mapError(e);
-    }
     }
   }
 
