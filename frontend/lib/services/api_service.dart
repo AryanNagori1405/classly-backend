@@ -104,19 +104,33 @@ class ApiService {
 
   // ── AUTH ─────────────────────────────────────────────────────────────────────
 
-  /// Step 1 – verify UID or Registration ID and receive an OTP
-  Future<Map<String, dynamic>> verifyUID({String? uid, String? regId}) =>
-      _post('/auth/verify-uid', {
-        if (uid != null) 'uid': uid,
-        if (regId != null) 'reg_id': regId,
+  /// Register a new student or teacher account
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String email,
+    required String phone,
+    required String regNo,
+    required String password,
+    String role = 'student',
+  }) =>
+      _post('/auth/register', {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'reg_no': regNo,
+        'password': password,
+        'role': role,
       });
 
-  /// Step 2 – verify the OTP and receive a JWT
-  Future<Map<String, dynamic>> verifyOTP({
-    required int userId,
-    required String otp,
+  /// Login with Registration Number and Password
+  Future<Map<String, dynamic>> login({
+    required String regNo,
+    required String password,
   }) =>
-      _post('/auth/verify-otp', {'user_id': userId, 'otp': otp});
+      _post('/auth/login', {
+        'reg_no': regNo,
+        'password': password,
+      });
 
   /// Refresh token
   Future<Map<String, dynamic>> refreshToken({required String token}) =>
@@ -125,28 +139,6 @@ class ApiService {
   /// Logout (client-side token disposal; server acknowledges)
   Future<void> logout({required String token}) =>
       _post('/auth/logout', {}, token: token);
-
-  /// Register a user (admin / seeding)
-  Future<Map<String, dynamic>> register({
-    required String name,
-    String? uid,
-    String? regId,
-    String role = 'student',
-    String? department,
-    String? semester,
-    String? email,
-    String? phone,
-  }) =>
-      _post('/auth/register', {
-        'name': name,
-        if (uid != null) 'uid': uid,
-        if (regId != null) 'reg_id': regId,
-        'role': role,
-        if (department != null) 'department': department,
-        if (semester != null) 'semester': semester,
-        if (email != null) 'email': email,
-        if (phone != null) 'phone': phone,
-      });
 
   /// Get own profile
   Future<Map<String, dynamic>> getMyProfile({required String token}) =>

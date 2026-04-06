@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../config/constants.dart';
 import '../../providers/auth_provider.dart';
-import 'uid_login_screen.dart';
+import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
   final String selectedRole;
@@ -22,9 +22,8 @@ class _SignupScreenState extends State<SignupScreen>
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _regIdController = TextEditingController();
-  final _departmentController = TextEditingController();
-  final _semesterController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _regNoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -92,9 +91,8 @@ class _SignupScreenState extends State<SignupScreen>
     _floatController.dispose();
     _nameController.dispose();
     _emailController.dispose();
-    _regIdController.dispose();
-    _departmentController.dispose();
-    _semesterController.dispose();
+    _phoneController.dispose();
+    _regNoController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -134,20 +132,46 @@ class _SignupScreenState extends State<SignupScreen>
 
       final authProvider = context.read<AuthProvider>();
 
-      // In UID-based auth, signup is done by admin.
-      // Direct user to the UID login flow instead.
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Registration is managed by your institution. Use your UID to log in.'),
-          duration: Duration(seconds: 4),
-        ),
+      final success = await authProvider.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        regNo: _regNoController.text.trim(),
+        password: _passwordController.text,
+        role: widget.selectedRole,
       );
+
       if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const UIDLoginScreen()),
-          (route) => false,
-        );
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Registration successful! Please log in.'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => LoginScreen(selectedRole: widget.selectedRole),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.error ?? 'Registration failed'),
+              backgroundColor: AppColors.errorColor,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+        }
       }
     }
   }
@@ -594,9 +618,9 @@ class _SignupScreenState extends State<SignupScreen>
 
                           const SizedBox(height: 14),
 
-                          // Registration ID Field
+                          // Registration Number Field
                           _buildAnimatedTextField(
-                            controller: _regIdController,
+                            controller: _regNoController,
                             hintText: 'Registration Number',
                             icon: Icons.assignment_rounded,
                             validator: (value) {
@@ -613,39 +637,21 @@ class _SignupScreenState extends State<SignupScreen>
 
                           const SizedBox(height: 14),
 
-                          // Department and Semester (Side by Side)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildAnimatedTextField(
-                                  controller: _departmentController,
-                                  hintText: 'Department',
-                                  icon: Icons.business_rounded,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    return null;
-                                  },
-                                  delay: 300,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildAnimatedTextField(
-                                  controller: _semesterController,
-                                  hintText: 'Semester',
-                                  icon: Icons.school_rounded,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Required';
-                                    }
-                                    return null;
-                                  },
-                                  delay: 400,
-                                ),
-                              ),
-                            ],
+                          // Phone Number Field
+                          _buildAnimatedTextField(
+                            controller: _phoneController,
+                            hintText: 'Phone Number',
+                            icon: Icons.phone_rounded,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Phone number is required';
+                              }
+                              if (value.length < 7) {
+                                return 'Enter a valid phone number';
+                              }
+                              return null;
+                            },
+                            delay: 300,
                           ),
 
                           const SizedBox(height: 14),
@@ -669,7 +675,7 @@ class _SignupScreenState extends State<SignupScreen>
                               }
                               return null;
                             },
-                            delay: 500,
+                            delay: 400,
                           ),
 
                           const SizedBox(height: 14),
@@ -690,7 +696,7 @@ class _SignupScreenState extends State<SignupScreen>
                               }
                               return null;
                             },
-                            delay: 600,
+                            delay: 500,
                           ),
 
                           SizedBox(height: size.height * 0.02),

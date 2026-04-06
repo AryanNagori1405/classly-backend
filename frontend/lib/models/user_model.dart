@@ -1,12 +1,10 @@
 class User {
   final int id;
-  final String uid;
-  final String regId;
+  final String regNo;
   final String name;
   final String email;
+  final String phone;
   final String role; // 'student' | 'teacher' | 'admin'
-  final String department;
-  final String semester;
   final String profileImage;
   final String bio;
   final DateTime createdAt;
@@ -14,13 +12,11 @@ class User {
 
   User({
     this.id = 0,
-    required this.uid,
-    required this.regId,
+    required this.regNo,
     required this.name,
     this.email = '',
+    this.phone = '',
     required this.role,
-    this.department = '',
-    this.semester = '',
     this.profileImage = 'https://via.placeholder.com/100',
     this.bio = '',
     DateTime? createdAt,
@@ -29,13 +25,11 @@ class User {
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'uid': uid,
-        'regId': regId,
+        'reg_no': regNo,
         'name': name,
         'email': email,
+        'phone': phone,
         'role': role,
-        'department': department,
-        'semester': semester,
         'profileImage': profileImage,
         'bio': bio,
         'createdAt': createdAt.toIso8601String(),
@@ -44,13 +38,11 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) => User(
         id: json['id'] as int? ?? 0,
-        uid: json['uid'] as String? ?? '',
-        regId: json['regId'] ?? json['reg_id'] as String? ?? '',
+        regNo: json['reg_no'] as String? ?? '',
         name: json['name'] as String? ?? '',
         email: json['email'] as String? ?? '',
+        phone: json['phone'] as String? ?? '',
         role: json['role'] as String? ?? 'student',
-        department: json['department'] as String? ?? '',
-        semester: json['semester'] as String? ?? '',
         profileImage: (json['profileImage'] ?? json['profile_image'])
                 as String? ??
             'https://via.placeholder.com/100',
@@ -62,26 +54,22 @@ class User {
       );
 
   User copyWith({
-    String? uid,
-    String? regId,
+    String? regNo,
     String? name,
     String? email,
+    String? phone,
     String? role,
-    String? department,
-    String? semester,
     String? profileImage,
     String? bio,
     bool? isVerified,
   }) =>
       User(
         id: id,
-        uid: uid ?? this.uid,
-        regId: regId ?? this.regId,
+        regNo: regNo ?? this.regNo,
         name: name ?? this.name,
         email: email ?? this.email,
+        phone: phone ?? this.phone,
         role: role ?? this.role,
-        department: department ?? this.department,
-        semester: semester ?? this.semester,
         profileImage: profileImage ?? this.profileImage,
         bio: bio ?? this.bio,
         createdAt: createdAt,

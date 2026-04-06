@@ -12,10 +12,6 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   bool _isNetworkError = false;
 
-  // Holds data between the two OTP steps
-  int? _pendingUserId;
-  String? _pendingUserRole;
-
   AuthProvider(this._apiService) {
     _loadUserFromStorage();
   }
@@ -26,8 +22,6 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _user != null && _token != null;
-  int? get pendingUserId => _pendingUserId;
-  String? get pendingUserRole => _pendingUserRole;
   /// True when the last error was a network / timeout issue (useful for showing retry UI).
   bool get isNetworkError => _isNetworkError;
 
@@ -51,16 +45,28 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Step 1: verify UID / RegId → receive OTP ────────────────────────────────
-  Future<bool> verifyUID({String? uid, String? regId}) async {
+  // ── Register ─────────────────────────────────────────────────────────────────
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String phone,
+    required String regNo,
+    required String password,
+    required String role,
+  }) async {
     _isLoading = true;
     _error = null;
     _isNetworkError = false;
     notifyListeners();
     try {
-      final response = await _apiService.verifyUID(uid: uid, regId: regId);
-      _pendingUserId = response['user_id'] as int?;
-      _pendingUserRole = response['role'] as String?;
+      await _apiService.register(
+        name: name,
+        email: email,
+        phone: phone,
+        regNo: regNo,
+        password: password,
+        role: role,
+      );
       _isLoading = false;
       notifyListeners();
       return true;
@@ -74,46 +80,27 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // ── Step 2: verify OTP → get JWT and log in ─────────────────────────────────
-  Future<bool> verifyOTP({required String otp}) async {
-    if (_pendingUserId == null) {
-      _error = 'No pending OTP session. Please enter your UID again.';
-      notifyListeners();
-      return false;
-    }
+  // ── Login ─────────────────────────────────────────────────────────────────────
+  Future<bool> login({
+    required String regNo,
+    required String password,
+  }) async {
     _isLoading = true;
     _error = null;
     _isNetworkError = false;
     notifyListeners();
     try {
-      final response =
-          await _apiService.verifyOTP(userId: _pendingUserId!, otp: otp);
+      final response = await _apiService.login(regNo: regNo, password: password);
 
       final userData = response['user'] as Map<String, dynamic>;
       _token = response['token'] as String?;
-      _user = User(
-        id: userData['id'] as int? ?? 0,
-        uid: userData['uid'] as String? ?? '',
-        regId: userData['reg_id'] as String? ?? '',
-        name: userData['name'] as String? ?? '',
-        email: userData['email'] as String? ?? '',
-        role: userData['role'] as String? ?? 'student',
-        department: userData['department'] as String? ?? '',
-        semester: userData['semester'] as String? ?? '',
-        profileImage: userData['profile_image'] as String? ??
-            'https://via.placeholder.com/100',
-        bio: userData['bio'] as String? ?? '',
-        isVerified: userData['is_verified'] as bool? ?? false,
-        createdAt: DateTime.now(),
-      );
+      _user = User.fromJson(userData);
 
       // Persist
       await StorageService.saveUser(_user!);
       await StorageService.saveToken(_token!);
       await StorageService.setAuthenticated(true);
 
-      _pendingUserId = null;
-      _pendingUserRole = null;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -139,7 +126,6 @@ class AuthProvider extends ChangeNotifier {
     _token = null;
     _error = null;
     _isNetworkError = false;
-    _pendingUserId = null;
     notifyListeners();
   }
 

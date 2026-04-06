@@ -459,7 +459,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'REG: ${user?.regId ?? 'N/A'}',
+                    'REG: ${user?.regNo ?? 'N/A'}',
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w700,
@@ -621,7 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               _buildTimelineItem(
                 number: '1',
                 label: 'Registration Number',
-                value: user.regId,
+                value: user.regNo,
                 icon: Icons.assignment_rounded,
                 color: AppColors.primaryColor,
               ),
@@ -630,9 +630,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '2',
-                label: 'Department',
-                value: user.department,
-                icon: Icons.business_rounded,
+                label: 'Email',
+                value: user.email.isNotEmpty ? user.email : '-',
+                icon: Icons.email_rounded,
                 color: const Color(0xFF8B5CF6),
               ),
 
@@ -640,9 +640,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '3',
-                label: 'Semester',
-                value: user.semester,
-                icon: Icons.school_rounded,
+                label: 'Phone',
+                value: user.phone.isNotEmpty ? user.phone : '-',
+                icon: Icons.phone_rounded,
                 color: const Color(0xFFF59E0B),
                 isLast: true,
               ),
@@ -657,18 +657,18 @@ class _ProfileScreenState extends State<ProfileScreen>
           children: [
             Expanded(
               child: _buildStatCard(
-                label: 'Department',
-                value: user.department.isNotEmpty ? user.department : '-',
-                icon: Icons.library_books_rounded,
+                label: 'Email',
+                value: user.email.isNotEmpty ? user.email : '-',
+                icon: Icons.email_rounded,
                 color: const Color(0xFF06B6D4),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
-                label: 'Semester',
-                value: user.semester.isNotEmpty ? user.semester : '-',
-                icon: Icons.groups_rounded,
+                label: 'Phone',
+                value: user.phone.isNotEmpty ? user.phone : '-',
+                icon: Icons.phone_rounded,
                 color: const Color(0xFF8B5CF6),
               ),
             ),
@@ -748,7 +748,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               _buildTimelineItem(
                 number: '1',
                 label: 'Registration Number',
-                value: user.regId,
+                value: user.regNo,
                 icon: Icons.assignment_rounded,
                 color: AppColors.primaryColor,
               ),
@@ -757,9 +757,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '2',
-                label: 'Department',
-                value: user.department,
-                icon: Icons.business_rounded,
+                label: 'Email',
+                value: user.email.isNotEmpty ? user.email : '-',
+                icon: Icons.email_rounded,
                 color: const Color(0xFF8B5CF6),
               ),
 
@@ -767,9 +767,9 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               _buildTimelineItem(
                 number: '3',
-                label: 'Specialization',
-                value: user.semester,
-                icon: Icons.star_rounded,
+                label: 'Phone',
+                value: user.phone.isNotEmpty ? user.phone : '-',
+                icon: Icons.phone_rounded,
                 color: const Color(0xFFFCD34D),
                 isLast: true,
               ),

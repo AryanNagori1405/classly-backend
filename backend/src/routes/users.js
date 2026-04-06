@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/profile', auth, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT id, uid, reg_id, name, email, phone, role, department, semester,
+            `SELECT id, reg_no, name, email, phone, role,
                     profile_image, bio, is_verified, is_active, created_at
              FROM users WHERE id = $1`,
             [req.user.id]
@@ -27,7 +27,7 @@ router.get('/profile', auth, async (req, res) => {
 // ── PUT /api/users/profile  – update own profile ──────────────────────────────
 router.put('/profile', auth, async (req, res) => {
     try {
-        const { name, email, phone, department, semester, bio, profile_image } = req.body;
+        const { name, email, phone, bio, profile_image } = req.body;
         const userId = req.user.id;
 
         const result = await pool.query(
@@ -35,15 +35,13 @@ router.put('/profile', auth, async (req, res) => {
              SET name          = COALESCE($1, name),
                  email         = COALESCE($2, email),
                  phone         = COALESCE($3, phone),
-                 department    = COALESCE($4, department),
-                 semester      = COALESCE($5, semester),
-                 bio           = COALESCE($6, bio),
-                 profile_image = COALESCE($7, profile_image),
+                 bio           = COALESCE($4, bio),
+                 profile_image = COALESCE($5, profile_image),
                  updated_at    = NOW()
-             WHERE id = $8
-             RETURNING id, uid, reg_id, name, email, phone, role, department,
-                       semester, profile_image, bio, is_verified`,
-            [name, email, phone, department, semester, bio, profile_image, userId]
+             WHERE id = $6
+             RETURNING id, reg_no, name, email, phone, role,
+                       profile_image, bio, is_verified`,
+            [name, email, phone, bio, profile_image, userId]
         );
 
         res.json({ message: 'Profile updated successfully', user: result.rows[0] });
@@ -57,7 +55,7 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/teachers', auth, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT id, name, email, department, profile_image, bio
+            `SELECT id, name, email, profile_image, bio
              FROM users WHERE role = 'teacher' AND is_active = TRUE
              ORDER BY name ASC`
         );
@@ -73,7 +71,7 @@ router.get('/teachers', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT id, name, role, department, semester, profile_image, bio, created_at
+            `SELECT id, name, role, profile_image, bio, created_at
              FROM users WHERE id = $1 AND is_active = TRUE`,
             [req.params.id]
         );

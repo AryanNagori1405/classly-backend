@@ -212,7 +212,7 @@ class _UserTile extends StatelessWidget {
     final name = user['name'] as String? ?? 'Unknown';
     final role = user['role'] as String? ?? 'student';
     final email = user['email'] as String? ?? '';
-    final uid = user['uid'] as String? ?? '';
+    final regNo = user['reg_no'] as String? ?? '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -248,7 +248,7 @@ class _UserTile extends StatelessWidget {
                       fontSize: 14,
                     )),
                 Text(
-                  email.isNotEmpty ? email : uid,
+                  email.isNotEmpty ? email : regNo,
                   style: const TextStyle(
                       color: AppColors.textMuted, fontSize: 12),
                 ),

@@ -4,7 +4,7 @@ import '../config/theme.dart';
 import '../config/constants.dart';
 import '../widgets/animations/slide_animation.dart';
 import '../widgets/animations/fade_animation.dart';
-import 'auth/uid_login_screen.dart';
+import 'auth/login_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({Key? key}) : super(key: key);
@@ -488,7 +488,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         AppFlow.setUserRole(_selectedRole!);
                         Navigator.of(context).push(
                           SmoothPageTransition(
-                            page: const UIDLoginScreen(),
+                            page: LoginScreen(selectedRole: _selectedRole!),
                           ),
                         );
                       }
