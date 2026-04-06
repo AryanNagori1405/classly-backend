@@ -24,32 +24,32 @@ class User extends Model {}
 
 User.init({
   /**
-   * Unique identifier for the user
-   * @type {string}
+   * Auto-incremented primary key
+   * @type {number}
    */
-  uid: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+  id: {
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
     allowNull: false,
   },
 
   /**
-   * Registration ID assigned to the user
+   * Registration number – used as the login identifier
    * @type {string}
    */
-  regId: {
-    type: DataTypes.STRING,
+  reg_no: {
+    type: DataTypes.STRING(100),
     unique: true,
     allowNull: false,
   },
 
   /**
-   * Name of the user
+   * Full name of the user
    * @type {string}
    */
   name: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     allowNull: false,
   },
 
@@ -58,18 +58,75 @@ User.init({
    * @type {string}
    */
   email: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     unique: true,
     allowNull: false,
   },
 
   /**
-   * Role of the user (e.g. teacher or student)
+   * Phone number of the user
+   * @type {string}
+   */
+  phone: {
+    type: DataTypes.STRING(20),
+    allowNull: false,
+  },
+
+  /**
+   * Role of the user
    * @type {string}
    */
   role: {
-    type: DataTypes.ENUM('teacher', 'student'),
+    type: DataTypes.ENUM('student', 'teacher', 'admin'),
     allowNull: false,
+    defaultValue: 'student',
+  },
+
+  /**
+   * Bcrypt-hashed password
+   * @type {string}
+   */
+  password_hash: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+  },
+
+  /**
+   * URL or path to the user's profile image
+   * @type {string}
+   */
+  profile_image: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
+  /**
+   * Short biography
+   * @type {string}
+   */
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+
+  /**
+   * Whether the user's account has been verified
+   * @type {boolean}
+   */
+  is_verified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+
+  /**
+   * Whether the user's account is active
+   * @type {boolean}
+   */
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
   },
 
   /**

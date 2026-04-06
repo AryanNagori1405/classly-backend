@@ -95,7 +95,7 @@ router.get('/all', async (req, res) => {
                     af.is_read, af.teacher_response, af.created_at,
                     teacher.id   as teacher_id,   teacher.name as teacher_name,
                     sender.id    as sender_id,    sender.name  as sender_name,
-                    sender.uid   as sender_uid,   sender.reg_id as sender_reg_id
+                    sender.reg_no as sender_reg_no
              FROM anonymous_feedback af
              JOIN users teacher ON af.teacher_id     = teacher.id
              JOIN users sender  ON af.sender_user_id = sender.id

@@ -153,7 +153,7 @@ class _FeedbackTrackingTile extends StatelessWidget {
     final category = feedback['category'] as String? ?? 'other';
     final senderName =
         feedback['sender_name'] as String? ?? feedback['sender'] as String?;
-    final senderUid = feedback['sender_uid'] as String?;
+    final senderRegNo = feedback['sender_reg_no'] as String?;
     final ipAddress = feedback['ip_address'] as String?;
     final createdAt = feedback['created_at'] as String? ?? '';
 
@@ -221,11 +221,11 @@ class _FeedbackTrackingTile extends StatelessWidget {
                     label: 'Sender',
                     value: senderName,
                   ),
-                if (senderUid != null)
+                if (senderRegNo != null)
                   _InfoRow(
                     icon: Icons.badge_outlined,
-                    label: 'UID',
-                    value: senderUid,
+                    label: 'Reg No',
+                    value: senderRegNo,
                   ),
                 if (ipAddress != null)
                   _InfoRow(
