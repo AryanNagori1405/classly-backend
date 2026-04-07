@@ -1,197 +1,200 @@
-# classly-backend
+# Classly – Classroom Lecture Sharing Platform
 
-Node.js + Express.js backend for the **Classly** lecture sharing platform.
+Full-stack application (Node.js backend + Flutter frontend) for sharing classroom lectures with advanced collaboration features.
+
+---
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔐 UID / RegId Auth | Login with University ID or Registration Number + OTP (no email/password) |
+| 🎥 Video Lectures | Teachers upload lectures; auto-deleted after 7 days |
+| ⏱️ Timestamp Doubts | Students ask questions at specific video timestamps |
+| 📝 Anonymous Feedback | Students send anonymous suggestions to teachers; admin can see real sender |
+| 👥 Communities | Students create/join discussion communities |
+| 📥 Downloads | Videos are downloadable for offline viewing |
+| 🔖 Bookmarks | Save lectures for quick access |
+| 📋 Notes/Docs | Teachers attach PDF/DOCX documents to lectures |
+| 👨‍💼 Admin Panel | Admin sees all feedback with sender info, manages users |
 
 ---
 
 ## Tech Stack
 
-| Layer        | Technology                  |
-|--------------|-----------------------------|
-| Runtime      | Node.js                     |
-| Framework    | Express.js                  |
-| Database     | PostgreSQL (via `pg`)       |
-| Auth         | JSON Web Tokens (`jsonwebtoken`) |
-| Passwords    | bcrypt (`bcryptjs`)         |
-| Config       | `dotenv`                    |
+| Layer | Technology |
+|-------|-----------|
+| Backend | Node.js + Express |
+| Database | PostgreSQL |
+| Auth | JWT + OTP |
+| Frontend | Flutter (Dart) |
+| Storage | File URLs (cloud-agnostic) |
+| Scheduler | node-schedule (7-day cleanup) |
+
+---
+
+## Quick Start
+
+### 1. Database setup
+
+**First-time setup** (creates the database and all tables):
+```bash
+psql -U postgres -c "CREATE DATABASE classly_db;"
+psql -U postgres -d classly_db -f backend/database-setup.sql
+```
+
+**Full reset** (drops and recreates the database from scratch, including seed data):
+```bash
+# Stop the backend server first, then run:
+psql -U postgres -f backend/database-reset.sql
+
+# Verify all tables were created:
+psql -U postgres -d classly_db -c "\dt"
+```
+
+After a reset, the following test credentials are available (OTP auth – no password needed):
+
+| Role    | UID      | RegID        |
+|---------|----------|--------------|
+| Admin   | ADMIN001 | ADMIN-REG-001 |
+| Student | STU001   | 202401001    |
+| Teacher | TCH001   | 202301001    |
+
+### 2. Backend
+
+```bash
+cd backend
+cp .env.example .env        # fill in DB credentials and JWT_SECRET
+npm install
+npm start                   # runs on http://localhost:5000
+```
+
+### 3. Flutter frontend
+
+```bash
+cd frontend
+cp .env.example .env        # optional – set API_URL
+flutter pub get
+flutter run
+```
+
+### 4. Docker (all-in-one)
+
+```bash
+cp backend/.env.example backend/.env   # fill in at least JWT_SECRET
+docker compose up --build
+```
+
+The API is available at `http://localhost:5000` and PostgreSQL at port `5432`.
+
+---
+
+## API Overview
+
+### Authentication (no email/password)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/verify-uid` | POST | Send UID or reg_id → receive OTP |
+| `/api/auth/verify-otp` | POST | Submit OTP → receive JWT |
+| `/api/auth/refresh-token` | POST | Refresh JWT |
+| `/api/auth/logout` | POST | Logout |
+| `/api/auth/register` | POST | Pre-register user (admin) |
+
+### Lectures / Videos
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/videos` | GET | List videos (with search/filter) |
+| `/api/videos` | POST | Upload lecture (teacher) |
+| `/api/videos/:id` | GET | Video detail |
+| `/api/videos/:id` | PATCH | Update lecture |
+| `/api/videos/:id/download` | POST | Record download |
+| `/api/videos/:id/upvote` | POST | Upvote/recommend |
+
+### Timestamp Doubts
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/timestamps/video/:id/timestamps` | GET | List doubts for video |
+| `/api/timestamps/video/:id/timestamps` | POST | Add doubt at timestamp |
+| `/api/timestamps/:id/resolve` | PATCH | Teacher marks resolved |
+| `/api/timestamps/:id/comments` | POST | Reply to doubt |
+| `/api/timestamps/video/:id/faq` | GET | Auto-compiled FAQ |
+
+### Communities
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/communities` | GET | Browse communities |
+| `/api/communities` | POST | Create community |
+| `/api/communities/:id/join` | POST | Join |
+| `/api/communities/:id/leave` | POST | Leave |
+| `/api/communities/:id/posts` | GET/POST | Posts |
+| `/api/communities/:id/posts/:postId/like` | POST | Like post |
+
+### Anonymous Feedback
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/feedback` | POST | Send anonymous feedback |
+| `/api/feedback/received` | GET | Teacher views feedback (no sender) |
+| `/api/feedback/all` | GET | Admin views all feedback WITH senders |
+| `/api/feedback/:id/response` | PUT | Teacher responds |
+| `/api/feedback/analytics` | GET | Teacher analytics |
+
+### Bookmarks
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/bookmarks` | GET | User's bookmarks |
+| `/api/bookmarks/:videoId` | POST | Bookmark a video |
+| `/api/bookmarks/:videoId` | DELETE | Remove bookmark |
+
+---
+
+## Environment Variables
+
+See `backend/.env.example` for all required variables.
+
+```
+DB_USER, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT
+JWT_SECRET, JWT_EXPIRES_IN
+PORT, NODE_ENV
+ALLOWED_ORIGINS           # CORS – leave empty to allow all
+SMTP_*                    # optional for email OTP delivery
+```
 
 ---
 
 ## Project Structure
 
 ```
-classly-backend/
-├── src/
-│   ├── config/
-│   │   └── database.js          # PostgreSQL connection pool
-│   ├── controllers/
-│   │   └── userController.js    # Register & login logic
-│   ├── middleware/
-│   │   ├── auth.js              # JWT authentication middleware
-│   │   ├── authMiddleware.js    # Role-based access helpers
-│   │   └── errorHandler.js     # Global error handler
-│   ├── models/
-│   │   └── User.js              # User schema reference
-│   ├── routes/
-│   │   └── auth.js              # Auth routes (/register, /login)
-│   └── utils/
-│       ├── jwt.js               # JWT helpers
-│       └── validators.js        # Input validation utilities
-├── .env.example                 # Environment variable template
-├── .gitignore
-├── database-setup.sql           # SQL to initialise database tables
-├── package.json
-└── README.md
+classly/
+├── backend/
+│   ├── src/
+│   │   ├── index.js          # Express app entry point
+│   │   ├── config/           # DB connection
+│   │   ├── middleware/        # JWT auth middleware
+│   │   ├── routes/           # All API routes
+│   │   └── jobs/             # 7-day video cleanup job
+│   ├── database-setup.sql    # Full PostgreSQL schema
+│   ├── .env.example
+│   └── Dockerfile
+├── frontend/
+│   ├── lib/
+│   │   ├── main.dart
+│   │   ├── models/           # User, Video, Course models
+│   │   ├── providers/        # AuthProvider (UID+OTP flow)
+│   │   ├── services/         # ApiService, StorageService
+│   │   └── screens/
+│   │       ├── auth/         # UIDLoginScreen, OTPVerificationScreen
+│   │       ├── home/         # StudentHome, TeacherHome
+│   │       ├── video/        # VideoList, VideoDetail (with doubts)
+│   │       ├── community/    # CommunityList, CommunityDetail
+│   │       ├── feedback/     # FeedbackScreen (anonymous)
+│   │       ├── bookmarks/    # BookmarksScreen
+│   │       └── admin/        # AdminDashboard
+│   └── pubspec.yaml
+└── docker-compose.yml
 ```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js ≥ 14
-- PostgreSQL ≥ 12
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/AryanNagori1405/classly-backend.git
-cd classly-backend
-```
-
-### 2. Install dependencies
-
-```bash
-npm install
-```
-
-### 3. Configure environment variables
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and fill in your database credentials and a strong `JWT_SECRET`.
-
-### 4. Initialise the database
-
-Connect to PostgreSQL and run:
-
-```bash
-psql -U postgres -d classly_db -f database-setup.sql
-```
-
-Or paste the contents of `database-setup.sql` directly into `psql` / pgAdmin.
-
-### 5. Start the server
-
-```bash
-# Production
-npm start
-
-# Development (auto-restart with nodemon)
-npm run dev
-```
-
-The API will be available at `http://localhost:5000`.
-
----
-
-## API Reference
-
-### Health check
-
-```
-GET /
-```
-
-**Response**
-```json
-{ "message": "Welcome to Classly Backend API" }
-```
-
----
-
-### Auth
-
-#### Register
-
-```
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "alice",
-  "password": "Secret@123"
-}
-```
-
-**Success (201)**
-```json
-{
-  "message": "User registered successfully",
-  "user": { "id": 1, "username": "alice" }
-}
-```
-
-#### Login
-
-```
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "username": "alice",
-  "password": "Secret@123"
-}
-```
-
-**Success (200)**
-```json
-{
-  "message": "Login successful",
-  "token": "<jwt>"
-}
-```
-
----
-
-### Protecting routes with JWT
-
-Include the token returned from `/login` in the `Authorization` header:
-
-```
-Authorization: Bearer <token>
-```
-
-In your route file:
-
-```js
-const auth = require('../middleware/auth');
-
-router.get('/protected', auth, (req, res) => {
-    res.json({ message: 'Authenticated!', user: req.user });
-});
-```
-
----
-
-## Environment Variables
-
-| Variable      | Description                           | Example             |
-|---------------|---------------------------------------|---------------------|
-| `DB_USER`     | PostgreSQL username                   | `postgres`          |
-| `DB_HOST`     | PostgreSQL host                       | `localhost`         |
-| `DB_NAME`     | PostgreSQL database name              | `classly_db`        |
-| `DB_PASSWORD` | PostgreSQL password                   | `secret`            |
-| `DB_PORT`     | PostgreSQL port                       | `5432`              |
-| `JWT_SECRET`  | Secret used to sign JWT tokens        | `changeme`          |
-| `PORT`        | Port the Express server listens on    | `5000`              |
-| `NODE_ENV`    | Environment mode                      | `development`       |
-
----
-
-## License
-
-ISC
