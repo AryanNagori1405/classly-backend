@@ -38,7 +38,7 @@ async function validateVideoOwnership(videoId, userId) {
 router.post('/', authenticateToken, async (req, res) => {
     try {
         const { title, description, file_url, thumbnail_url, duration,
-                subject, subject_category, department, course_id } = req.body;
+                file_size, subject, category } = req.body;
         const teacherId = req.user.id;
 
         // Validate required fields
@@ -46,39 +46,17 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'Title and file_url are required' });
         }
 
-        // If course_id provided, validate it belongs to this teacher and has videos enabled
-        let resolvedCourseId = course_id || null;
-        if (course_id) {
-            const courseResult = await pool.query(
-                'SELECT id, enable_videos FROM courses WHERE id = $1 AND created_by = $2',
-                [course_id, teacherId]
-            );
-            if (courseResult.rows.length === 0) {
-                return res.status(403).json({ message: 'Course not found or you are not the creator' });
-            }
-            if (!courseResult.rows[0].enable_videos) {
-                return res.status(400).json({ message: 'Videos are not enabled for this course' });
-            }
-        }
-
         // Insert video
         const result = await pool.query(
-            `INSERT INTO videos (teacher_id, course_id, title, description, file_url,
-                thumbnail_url, duration, subject, subject_category, department,
+            `INSERT INTO videos (teacher_id, title, description, file_url,
+                thumbnail_url, duration, file_size, subject, category,
                 is_public, is_deleted, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
                      CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [teacherId, resolvedCourseId, title, description, file_url,
-             thumbnail_url, duration || null, subject || null,
-             subject_category || null, department || null, true, false]
-        );
-
-        // Log video upload
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [result.rows[0].id, 'uploaded', `Video "${title}" uploaded by teacher`]
+            [teacherId, title, description || null, file_url,
+             thumbnail_url || null, duration || null, file_size || null,
+             subject || null, category || null, true, false]
         );
 
         res.status(201).json({
@@ -94,14 +72,14 @@ router.post('/', authenticateToken, async (req, res) => {
 // GET /api/videos - List all videos with filters
 router.get('/', authenticateToken, async (req, res) => {
     try {
-        const { subject, teacher, search, sortBy } = req.query;
+        const { subject, category, teacher, search, sortBy } = req.query;
         let query = `SELECT * FROM videos WHERE is_public = true AND is_deleted = false AND created_at > NOW() - INTERVAL '7 days'`;
         let params = [];
 
-        // Filter by subject
-        if (subject) {
-            query += ` AND subject_category = $${params.length + 1}`;
-            params.push(subject);
+        // Filter by category
+        if (category || subject) {
+            query += ` AND category = $${params.length + 1}`;
+            params.push(category || subject);
         }
 
         // Filter by teacher
@@ -200,13 +178,6 @@ router.patch('/:videoId', authenticateToken, async (req, res) => {
             [title, description, thumbnail_url, videoId]
         );
 
-        // Log video update
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [videoId, 'updated', `Video metadata updated`]
-        );
-
         res.json({
             message: 'Video updated successfully',
             video: result.rows[0]
@@ -246,13 +217,6 @@ router.post('/:videoId/download', authenticateToken, async (req, res) => {
             [videoId]
         );
 
-        // Log download
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [videoId, 'downloaded', `Video downloaded by user ${userId}`]
-        );
-
         res.json({
             message: 'Download tracked successfully',
             download_link: videoResult.rows[0].file_url
@@ -278,13 +242,6 @@ router.post('/:videoId/pin', authenticateToken, async (req, res) => {
         const result = await pool.query(
             `UPDATE videos SET is_pinned = NOT is_pinned WHERE id = $1 RETURNING *`,
             [videoId]
-        );
-
-        // Log pin action
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [videoId, 'pinned', `Video ${result.rows[0].is_pinned ? 'pinned' : 'unpinned'}`]
         );
 
         res.json({
@@ -348,55 +305,9 @@ router.post('/:videoId/upvote', authenticateToken, async (req, res) => {
             [videoId]
         );
 
-        // Log upvote
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [videoId, 'upvoted', `Video upvoted by user ${req.user.id}`]
-        );
-
         res.json({ message: 'Video upvoted successfully' });
     } catch (error) {
         console.error('Error upvoting video:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// GET /api/videos/:videoId/audit-log - Get video audit trail
-router.get('/:videoId/audit-log', authenticateToken, async (req, res) => {
-    try {
-        const { videoId } = req.params;
-        const userId = req.user.id;
-
-        // Check if user owns the video
-        const videoResult = await pool.query(
-            'SELECT * FROM videos WHERE id = $1',
-            [videoId]
-        );
-
-        if (videoResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Video not found' });
-        }
-
-        const video = videoResult.rows[0];
-
-        if (video.teacher_id !== userId) {
-            return res.status(403).json({ message: 'You can only view your own video audit logs' });
-        }
-
-        // Get audit log
-        const result = await pool.query(
-            'SELECT * FROM video_audit_log WHERE video_id = $1 ORDER BY created_at DESC',
-            [videoId]
-        );
-
-        res.json({
-            message: 'Audit log retrieved',
-            video_title: video.title,
-            audit_log: result.rows
-        });
-    } catch (error) {
-        console.error('Error fetching audit log:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
@@ -423,15 +334,9 @@ router.delete('/:videoId', authenticateToken, async (req, res) => {
         }
 
         await pool.query(
-            `UPDATE videos SET is_deleted = TRUE, deleted_at = CURRENT_TIMESTAMP,
+            `UPDATE videos SET is_deleted = TRUE,
              updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
             [videoId]
-        );
-
-        await pool.query(
-            `INSERT INTO video_audit_log (video_id, action, description, created_at)
-             VALUES ($1, $2, $3, CURRENT_TIMESTAMP)`,
-            [videoId, 'deleted', `Video deleted by user ${userId}`]
         );
 
         res.json({ message: 'Video deleted successfully' });

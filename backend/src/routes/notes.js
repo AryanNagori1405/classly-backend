@@ -58,10 +58,10 @@ router.post('/video/:videoId/notes', authenticateToken, async (req, res) => {
 
         // Insert note
         const result = await pool.query(
-            `INSERT INTO video_notes (video_id, note_title, file_url, file_type, uploaded_by, is_official, is_approved, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+            `INSERT INTO video_notes (video_id, note_title, file_url, file_type, uploaded_by, created_at)
+             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [videoId, note_title, file_url, file_type || 'pdf', uploadedBy, true, true]
+            [videoId, note_title, file_url, file_type || 'pdf', uploadedBy]
         );
 
         res.status(201).json({
@@ -91,29 +91,15 @@ router.get('/video/:videoId/notes', authenticateToken, async (req, res) => {
         }
 
         let query = `
-            SELECT vn.*, u.name as uploaded_by_name, u.email,
-                   COUNT(DISTINCT vns.id) as suggested_count
+            SELECT vn.*, u.name as uploaded_by_name, u.email
             FROM video_notes vn
             JOIN users u ON vn.uploaded_by = u.id
-            LEFT JOIN (
-                SELECT * FROM video_notes 
-                WHERE is_official = false AND is_approved = false
-            ) vns ON vn.id = vns.id
             WHERE vn.video_id = $1
         `;
 
         let params = [videoId];
 
-        // Filter by type
-        if (filter === 'official') {
-            query += ` AND vn.is_official = true`;
-        } else if (filter === 'suggested') {
-            query += ` AND vn.is_official = false AND vn.is_approved = false`;
-        } else if (filter === 'approved') {
-            query += ` AND vn.is_approved = true`;
-        }
-
-        query += ` GROUP BY vn.id, u.id ORDER BY vn.created_at DESC`;
+        query += ` ORDER BY vn.created_at DESC`;
 
         const result = await pool.query(query, params);
 
@@ -179,111 +165,18 @@ router.post('/:noteId/suggest', authenticateToken, async (req, res) => {
 
         // Insert suggested note
         const result = await pool.query(
-            `INSERT INTO video_notes (video_id, note_title, file_url, file_type, uploaded_by, is_official, is_approved, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+            `INSERT INTO video_notes (video_id, note_title, file_url, file_type, uploaded_by, created_at)
+             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [videoId, note_title, file_url, file_type || 'pdf', userId, false, false]
+            [videoId, note_title, file_url, file_type || 'pdf', userId]
         );
 
         res.status(201).json({
-            message: 'Note suggested successfully. Waiting for teacher approval.',
+            message: 'Note uploaded successfully.',
             note: result.rows[0]
         });
     } catch (error) {
         console.error('Error suggesting note:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// PATCH /api/notes/:noteId/approve - Admin approves suggested note
-router.patch('/:noteId/approve', authenticateToken, async (req, res) => {
-    try {
-        const { noteId } = req.params;
-        const userId = req.user.id;
-
-        // Get note
-        const noteResult = await pool.query(
-            `SELECT vn.*, v.teacher_id
-             FROM video_notes vn
-             JOIN videos v ON vn.video_id = v.id
-             WHERE vn.id = $1`,
-            [noteId]
-        );
-
-        if (noteResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Note not found' });
-        }
-
-        const note = noteResult.rows[0];
-
-        // Check if user is teacher of this video
-        if (note.teacher_id !== userId) {
-            return res.status(403).json({ message: 'Only the teacher can approve notes' });
-        }
-
-        // Check if already official
-        if (note.is_official) {
-            return res.status(400).json({ message: 'This is already an official note' });
-        }
-
-        // Approve note
-        const result = await pool.query(
-            `UPDATE video_notes 
-             SET is_approved = true, is_official = true
-             WHERE id = $1
-             RETURNING *`,
-            [noteId]
-        );
-
-        res.json({
-            message: 'Note approved and published successfully',
-            note: result.rows[0]
-        });
-    } catch (error) {
-        console.error('Error approving note:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// PATCH /api/notes/:noteId/reject - Teacher rejects suggested note
-router.patch('/:noteId/reject', authenticateToken, async (req, res) => {
-    try {
-        const { noteId } = req.params;
-        const { reason } = req.body;
-        const userId = req.user.id;
-
-        // Get note
-        const noteResult = await pool.query(
-            `SELECT vn.*, v.teacher_id
-             FROM video_notes vn
-             JOIN videos v ON vn.video_id = v.id
-             WHERE vn.id = $1`,
-            [noteId]
-        );
-
-        if (noteResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Note not found' });
-        }
-
-        const note = noteResult.rows[0];
-
-        // Check if user is teacher
-        if (note.teacher_id !== userId) {
-            return res.status(403).json({ message: 'Only the teacher can reject notes' });
-        }
-
-        // Delete suggested note
-        await pool.query(
-            'DELETE FROM video_notes WHERE id = $1 AND is_official = false',
-            [noteId]
-        );
-
-        res.json({ 
-            message: 'Note rejected and deleted',
-            reason: reason || 'No reason provided'
-        });
-    } catch (error) {
-        console.error('Error rejecting note:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
@@ -323,35 +216,6 @@ router.delete('/:noteId', authenticateToken, async (req, res) => {
         res.json({ message: 'Note deleted successfully' });
     } catch (error) {
         console.error('Error deleting note:', error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});
-
-// GET /api/admin/notes/pending - Admin views pending notes
-router.get('/admin/notes/pending', authenticateToken, async (req, res) => {
-    try {
-        const userId = req.user.id;
-
-        // Get all pending notes for teacher's videos
-        const result = await pool.query(
-            `SELECT vn.*, u.name as suggested_by_name, u.email as suggested_by_email, 
-                    v.title as video_title, t.name as teacher_name
-             FROM video_notes vn
-             JOIN users u ON vn.uploaded_by = u.id
-             JOIN videos v ON vn.video_id = v.id
-             JOIN users t ON v.teacher_id = t.id
-             WHERE v.teacher_id = $1 AND vn.is_official = false AND vn.is_approved = false
-             ORDER BY vn.created_at DESC`,
-            [userId]
-        );
-
-        res.json({
-            message: 'Pending notes retrieved',
-            count: result.rows.length,
-            pending_notes: result.rows
-        });
-    } catch (error) {
-        console.error('Error fetching pending notes:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

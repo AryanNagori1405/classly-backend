@@ -188,10 +188,10 @@ router.post('/:timestampId/comments', authenticateToken, async (req, res) => {
 
         // Insert comment
         const result = await pool.query(
-            `INSERT INTO timestamp_comments (timestamp_id, user_id, comment_text, is_anonymous, is_deleted, created_at)
-             VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)
+            `INSERT INTO timestamp_comments (timestamp_id, user_id, comment_text, is_deleted, created_at)
+             VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
              RETURNING *`,
-            [timestampId, userId, comment_text, is_anonymous || false, false]
+            [timestampId, userId, comment_text, false]
         );
 
         res.status(201).json({
@@ -210,9 +210,7 @@ router.get('/:timestampId/comments', authenticateToken, async (req, res) => {
         const { timestampId } = req.params;
 
         const result = await pool.query(
-            `SELECT tc.*, 
-                    CASE WHEN tc.is_anonymous THEN 'Anonymous' ELSE u.name END as user_name,
-                    CASE WHEN tc.is_anonymous THEN NULL ELSE u.email END as user_email
+            `SELECT tc.*, u.name as user_name, u.email as user_email
              FROM timestamp_comments tc
              LEFT JOIN users u ON tc.user_id = u.id
              WHERE tc.timestamp_id = $1 AND tc.is_deleted = false
