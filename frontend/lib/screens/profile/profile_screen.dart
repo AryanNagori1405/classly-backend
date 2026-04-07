@@ -650,31 +650,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ),
 
-        const SizedBox(height: 16),
-
-        // Stats Row
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                label: 'Email',
-                value: user.email.isNotEmpty ? user.email : '-',
-                icon: Icons.email_rounded,
-                color: const Color(0xFF06B6D4),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                label: 'Phone',
-                value: user.phone.isNotEmpty ? user.phone : '-',
-                icon: Icons.phone_rounded,
-                color: const Color(0xFF8B5CF6),
-              ),
-            ),
-          ],
-        ),
-
         if (user.bio.isNotEmpty) ...[
           const SizedBox(height: 16),
           _buildBioCard(user.bio),

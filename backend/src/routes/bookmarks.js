@@ -63,7 +63,7 @@ router.get('/', async (req, res) => {
 
         const result = await pool.query(
             `SELECT b.created_at as bookmarked_at,
-                    v.id, v.title, v.description, v.subject_category,
+                    v.id, v.title, v.description, v.subject, v.category,
                     v.thumbnail_url, v.duration, v.file_url, v.views_count,
                     v.created_at, v.expires_at,
                     u.name as teacher_name
